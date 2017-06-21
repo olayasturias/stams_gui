@@ -1,0 +1,6 @@
+<launch>
+        <include file="$(find underwater_vehicle_dynamics)/launch/UWSim_g500_dynamics.launch" >
+        <arg name="scene" default="cool_shaft.xml" />
+        </include>
+	<node name = "sensor_reader" pkg = "ROV_simulator" type = "imu_read.py" respawn="true" />
+</launch>

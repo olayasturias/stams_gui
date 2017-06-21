@@ -1,0 +1,24 @@
+<library path="src">
+  <class name="ROV simulator plugin" type="rqt_mypkg.my_module.MyPlugin" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A GUI plugin to create a user interface.
+    </description>
+    <qtgui>
+      
+      <group>
+        <label>Visualization</label>
+        <icon type="theme">folder</icon>
+	<statustip>Plugins related to logging.</statustip>
+      </group>
+      <!-- optional grouping...
+      <group>
+        <label>Subgroup</label>
+      </group>
+      -->
+      <label>My Python Plugin</label>
+      <icon type="theme">system-help</icon>
+      <statustip>Great user interface to provide real value.</statustip>
+    </qtgui>
+  </class>
+</library>
+
