@@ -512,12 +512,12 @@ class Window(QtGui.QWidget):
       self.ic = image_converter()
 
       # For PCAS
-      #self.imgwinpcas = pg.GraphicsLayoutWidget()
-      #viewpcas = self.imgwin.addViewBox()
+      self.imgwinpcas = pg.GraphicsLayoutWidget()
+      viewpcas = self.imgwinpcas.addViewBox()
       # Create image item
-      #self.collisioncameraimg = pg.ImageItem(border='w')
-      #viewpcas.addItem(self.collisioncameraimg)
-      #self.collision_ic = image_converter()
+      self.collisioncameraimg = pg.ImageItem(border='w')
+      viewpcas.addItem(self.collisioncameraimg)
+      self.collision_ic = image_converter()
 
       ## 3D GRAPICS ##
 
@@ -591,7 +591,7 @@ class Window(QtGui.QWidget):
 
       splitterpcas = QtGui.QSplitter(self)
       splitterpcas.addWidget(self.pcas)
-      #splitterpcas.addWidget(self.imgwinpcas)
+      splitterpcas.addWidget(self.imgwinpcas)
 
       # BtnUP and btnDOWN vertical between them (with joystick), form layoutV2
       layout1V1 = QtGui.QVBoxLayout()
@@ -638,7 +638,7 @@ class Window(QtGui.QWidget):
       # for ROV
       self.ic.newcameraimage.connect(self.update_ROV_image)
       # for collision avoidance camera
-      #self.collision_ic.newcameraimage.connect(self.update_collisioncam_image)
+      self.collision_ic.newcameraimage.connect(self.update_collisioncam_image)
 
       # Profiling Sonar PointCloud
       self.PS_PC = ProfilingSonar_PC()
@@ -650,7 +650,7 @@ class Window(QtGui.QWidget):
       # Subscribe to pose message that needs to be displayed
       self.ps.subscribe(self.ps.newstring,self.ps.newscatter)
       self.ic.subscribe(self.ic.newcameraimage,"/uwsim/camera1")
-      #self.collision_ic.subscribe(self.collision_ic.newcameraimage,"/v4l/bowtech_camera/image_raw")
+      self.collision_ic.subscribe(self.collision_ic.newcameraimage,"/v4l/bowtech_camera/image_raw")
 
       ## DISPLAY WIDGET ##
       # Display widget on screen
