@@ -513,6 +513,7 @@ class Window(QtGui.QWidget):
 
       # For PCAS
       self.imgwinpcas = pg.GraphicsLayoutWidget()
+      self.imgwinpcas.rotate(90.0)
       viewpcas = self.imgwinpcas.addViewBox()
       # Create image item
       self.collisioncameraimg = pg.ImageItem(border='w')
