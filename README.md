@@ -6,7 +6,7 @@ It will allow easier manoeuvre of the different devices, and convenient visualiz
 
 ## Setting up
 
-You must clone this repository as `tritech_profiler` into your catkin workspace:
+You must clone this repository as `stams_gui` into your catkin workspace:
 
 ```bash
 git clone https://github.com/olayasturias/stams_gui
