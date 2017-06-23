@@ -21,6 +21,12 @@ rosdep update
 rosdep install stams_gui
 ```
 
+Another dependency is `tritech_profiler`, from my repository. In order to install it, in your catkin workspace, do:
+
+```bash
+git clone https://github.com/olayasturias/tritech_profiler
+```
+
 ## Compiling
 
 You **must** compile this package before being able to run it. You can do so
@@ -37,7 +43,7 @@ from the root of your workspace.
 To run the RPIM package run the node with:
 
 ```bash
-rosrun stams_gui rpim.py
+roslaunch stams_gui rpim.launch
 ```
 
 
