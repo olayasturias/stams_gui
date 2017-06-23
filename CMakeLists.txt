@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   PCL REQUIRED
   rqt_gui
   rqt_gui_py
+  tritech_profiler
+  gscam
 )
 
 ## System dependencies are found with CMake's conventions

@@ -49,6 +49,8 @@
   <build_depend>laser_geometry</build_depend>
   <build_depend>pcl_ros</build_depend>
   <build_depend>libpcl-all-dev</build_depend>
+  <build_depend>tritech_profiler</build_depend>
+  <build_depend>gscam</build_depend>
 
   <run_depend>libpcl-all</run_depend>
   <run_depend>geometry_msgs</run_depend>
@@ -60,6 +62,8 @@
   <run_depend>laser_geometry</run_depend>
   <run_depend>pcl_ros</run_depend>
   <run_depend>rqt_gui_py</run_depend>
+  <run_depend>tritech_profiler</run_depend>
+  <run_depend>gscam</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
