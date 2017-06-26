@@ -217,22 +217,21 @@ class ProfilingSonar_PC(QThread):
         self.newpcsignal = QtCore.SIGNAL("PSsignal")
 
         rospy.Subscriber("/tritech_profiler/scan",PointCloud,self.PS_callback)
-
-    def run(self):
-        ''' This function is executed every ___ seconds, and the pointcloud plot signal
-        is emitted'''
-        while 1:
-            time.sleep(1)
-
-            self.PSCloud = V4LOG_to_py('PS.CSV')
-            self.PSCloud.generate_useful_data_header()
-            self.PSCloud.read_useful_csv('PS.CSV')
-            self.PSCloud.convert_cylindrical_cartesian()
-
-            self.emit(self.newpcsignal,"profilingsonar PC thread")
-    def PS_callback(data):
+    #
+    # def run(self):
+    #     ''' This function is executed every ___ seconds, and the pointcloud plot signal
+    #     is emitted'''
+    #     while 1:
+    #         time.sleep(1)
+    #
+    #         self.PSCloud = V4LOG_to_py('PS.CSV')
+    #         self.PSCloud.generate_useful_data_header()
+    #         self.PSCloud.read_useful_csv('PS.CSV')
+    #         self.PSCloud.convert_cylindrical_cartesian()
+    #
+    #         self.emit(self.newpcsignal,"profilingsonar PC thread")
+    def PS_callback(self,data):
         self.profiler_PC = data
-        print self.profiler_PC
         self.emit(self.newpcsignal,"profilingsonar PC thread")
 
 
@@ -678,34 +677,45 @@ class Window(QtGui.QWidget):
         A GLScatterPLotItem which is used to show text in the widget.
         """
 
-        z = self.PS_PC.PSCloud.cylindric_cartesian['Z']
-        x = self.PS_PC.PSCloud.cylindric_cartesian['X']
-        y = self.PS_PC.PSCloud.cylindric_cartesian['Y']
+        # z = self.PS_PC.PSCloud.cylindric_cartesian['Z']
+        # x = self.PS_PC.PSCloud.cylindric_cartesian['X']
+        # y = self.PS_PC.PSCloud.cylindric_cartesian['Y']
+        #
+        #
+        # # Normalize values (to create the color palette)
+        # z_norm = z/z.max()
+        # # Extract the sensor values to be drawn
+        # verts = np.empty((len(x), 3), dtype=np.float64)
+        # verts[:,0] = x
+        # verts[:,1] = y
+        # verts[:,2] = z*20
+        # # Create the color palette
+        # color = np.ones((len(x),4))
+        # color[:,0] = 6.25*z_norm*z_norm*z_norm-9.375*z_norm*z_norm+2.125*z_norm+1
+        # color[:,1] = 4.17*z_norm*z_norm*z_norm-6.25*z_norm*z_norm+3.1*z_norm
+        # color[:,2] = 4.17*z_norm*z_norm*z_norm-6.25*z_norm*z_norm+3.1*z_norm
+        # #color[:,3] = 4.17*z_norm*z_norm*z_norm-6.25*z_norm*z_norm+3.1*z_norm
+        #
+        # color_normed = color/color.max(axis = 0)
+        #
+        # # Draw the scatter plot
+        # self.scatt_prof = gl.GLScatterPlotItem(pos=verts,color=color_normed,size=5)
+        # self.scatt_prof.setGLOptions('translucent')
+        # self.pcas.addItem(self.scatt_prof)
+        #
+        # # Add label with mouse cursor values
+        # self.scatt_plot_label = MyGLView(self.pcas)
+        # self.scatt_plot_label.paintGL(region=self.pcas.getViewport())
 
-        # Normalize values (to create the color palette)
-        z_norm = z/z.max()
-        # Extract the sensor values to be drawn
-        verts = np.empty((len(x), 3), dtype=np.float64)
-        verts[:,0] = x
-        verts[:,1] = y
-        verts[:,2] = z*20
-        # Create the color palette
-        color = np.ones((len(x),4))
-        color[:,0] = 6.25*z_norm*z_norm*z_norm-9.375*z_norm*z_norm+2.125*z_norm+1
-        color[:,1] = 4.17*z_norm*z_norm*z_norm-6.25*z_norm*z_norm+3.1*z_norm
-        color[:,2] = 4.17*z_norm*z_norm*z_norm-6.25*z_norm*z_norm+3.1*z_norm
-        #color[:,3] = 4.17*z_norm*z_norm*z_norm-6.25*z_norm*z_norm+3.1*z_norm
+        verts = np.array([[0,0,0]])
+        for point in self.PS_PC.profiler_PC.points:
+            verts = np.vstack((verts, [point.x,point.y,point.z]))
 
-        color_normed = color/color.max(axis = 0)
+        color = np.ones((len(verts), 4))
 
-        # Draw the scatter plot
-        self.scatt_prof = gl.GLScatterPlotItem(pos=verts,color=color_normed,size=5)
+        self.scatt_prof = gl.GLScatterPlotItem(pos=verts,color=color,size=5)
         self.scatt_prof.setGLOptions('translucent')
         self.pcas.addItem(self.scatt_prof)
-
-        # Add label with mouse cursor values
-        self.scatt_plot_label = MyGLView(self.pcas)
-        self.scatt_plot_label.paintGL(region=self.pcas.getViewport())
 
     def joystick_changed(self):
         """ This function unlocs the joystick thread, allowing it to update the
