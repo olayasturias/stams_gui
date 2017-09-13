@@ -11,6 +11,22 @@ from PyQt4.Qt import QObject, QMutex, QApplication, QThread, QMutexLocker, QEven
 
 import serial
 
+class SerialSubscribe(QThread):
+    def __init__(self, channel):
+        QtCore.QThread.__init__(self)
+        self.channel = channel
+        self.signal = QtCore.SIGNAL("signal")
+
+    def run(self):
+        while 1:
+            time.sleep(0.01)
+            try:
+                self.line = self.channel.readline()
+                self.emit(self.signal, "line read")
+            except:
+                pass
+
+
 class Window(QtGui.QWidget):
     def __init__(self):
         # The super method returns the parent object of the Windw class, and we call its constructor
@@ -33,7 +49,9 @@ class Window(QtGui.QWidget):
         lblbr = QtGui.QLabel('BaudRate:', self)
         lbltimeout = QtGui.QLabel('Timeout:', self)
         lblstatus = QtGui.QLabel('Status:')
-        self.lblst =QtGui.QLabel('okey makey')
+        self.lblst =QtGui.QLabel('OK')
+
+        self.OpenClosePort()
 
         try:
             self.serconn = serial.Serial(self.port, self.baudrate)
@@ -56,6 +74,7 @@ class Window(QtGui.QWidget):
 
         self.re = QtGui.QLineEdit(self)
         self.re.resize(self.le.sizeHint())
+
 
         ##  Combo Box ##
 
@@ -145,6 +164,7 @@ class Window(QtGui.QWidget):
     def comboPortActivated(self,text):
         self.port = str(text)
         self.serconn.port = str(text)
+        self.ssub.port = str(text)
         if self.serconn.is_open:
             self.lblst.setText('Serial port is open')
         else:
@@ -153,6 +173,7 @@ class Window(QtGui.QWidget):
     def comboBaudActivated(self, baudtxt):
         self.baudrate = int(baudtxt)
         self.serconn.baudrate = self.baudrate
+        self.ssub.baudrate = self.baudrate
         if self.serconn.is_open:
             self.lblst.setText('Serial port is open')
         else:
@@ -171,25 +192,29 @@ class Window(QtGui.QWidget):
 
         if openport:
             self.serconn.close()
+
         else:
             self.serconn.open()
 
 
         if self.serconn.is_open:
             self.lblst.setText('Serial port is open')
+            self.ssub = SerialSubscribe(self.serconn)
+            self.ssub.start()
+            self.connect(self.ssub, self.ssub.signal, self.update_text)
         else:
             self.lblst.setText('Serial port is closed')
 
     def comboTimeout(self,text):
         self.serconn.timeout = int(text)
+        self.ssub.timeout = int(text)
         if self.serconn.is_open:
             self.lblst.setText('Serial port is open')
         else:
             self.lblst.setText('Serial port is closed')
 
-
-
-
+    def update_text(self):
+        self.re.setText(self.ssub.line)
 
 
 
