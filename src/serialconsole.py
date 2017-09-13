@@ -25,16 +25,20 @@ class Window(QtGui.QWidget):
         self.port = '/dev/ttyUSB0'
         self.baudrate = 57600
         self.timeout = 1000
-        self.serconn = serial.Serial(self.port, self.baudrate)
 
         ## LABELS ##
         lblsent = QtGui.QLabel('Last command sent:')
         lblrec = QtGui.QLabel('Received:')
         lblport = QtGui.QLabel('Port:', self)
         lblbr = QtGui.QLabel('BaudRate:', self)
-        lbltimeout = QtGui.QLabel('Timeout (ms):', self)
+        lbltimeout = QtGui.QLabel('Timeout:', self)
         lblstatus = QtGui.QLabel('Status:')
         self.lblst =QtGui.QLabel('okey makey')
+
+        try:
+            self.serconn = serial.Serial(self.port, self.baudrate)
+        except:
+            self.lblst.setText('could not open port. Device connected?')
 
         ## BTN for dialog ##
         self.btndialog = QtGui.QPushButton('Send serial command', self)
@@ -75,11 +79,15 @@ class Window(QtGui.QWidget):
 
         combolbr.activated[str].connect(self.comboBaudActivated)
 
-        combotimeout = QtGui.QComboBox(self)
-        combotimeout.setEditable(True)
 
-        combotimeout.activated[str].connect(self.comboTimeout)
+        combotimeout = QtGui.QSpinBox(self)
+        combotimeout.setMinimum(-1)
+        combotimeout.setMaximum(1000000)
+        combotimeout.setSingleStep(10)
+        combotimeout.setValue(10)
+        combotimeout.setSuffix('ms')
 
+        combotimeout.valueChanged.connect(self.comboTimeout)
 
 
         layoutV1 = QtGui.QVBoxLayout()
@@ -151,10 +159,21 @@ class Window(QtGui.QWidget):
             self.lblst.setText('Serial port is closed')
 
     def OpenClosePort(self):
-        if self.serconn.is_open:
+
+        try:
+            openport = self.serconn.is_open
+        except:
+            try:
+                self.serconn = serial.Serial(self.port,self.baudrate)
+            except:
+                self.lblst.setText('could not open port. Device connected?')
+            openport = self.serconn.is_open
+
+        if openport:
             self.serconn.close()
         else:
             self.serconn.open()
+
 
         if self.serconn.is_open:
             self.lblst.setText('Serial port is open')
