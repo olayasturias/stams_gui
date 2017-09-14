@@ -24,6 +24,7 @@ class SerialSubscribe(QThread):
                 self.line = self.channel.readline()
                 self.emit(self.signal, "line read")
             except:
+                self.line = 'could not read stream. Try restarting port'
                 pass
 
 
@@ -69,11 +70,19 @@ class Window(QtGui.QWidget):
         self.connect(self.btnport, QtCore.SIGNAL("clicked()"),
                      self.OpenClosePort)
 
+        # Sent messages text
+
         self.le = QtGui.QLineEdit(self)
         self.le.resize(self.le.sizeHint())
 
-        self.re = QtGui.QLineEdit(self)
+        # received messages text
+
+        self.re = QtGui.QPlainTextEdit(self)
         self.re.resize(self.le.sizeHint())
+        # With this, the user wont be able to edit plain text
+        self.re.setReadOnly(1)
+        # Scroll automatically to the bottom of the text
+        self.re.centerCursor()
 
 
         ##  Combo Box ##
@@ -102,9 +111,9 @@ class Window(QtGui.QWidget):
         combotimeout = QtGui.QSpinBox(self)
         combotimeout.setMinimum(-1)
         combotimeout.setMaximum(1000000)
-        combotimeout.setSingleStep(10)
-        combotimeout.setValue(10)
-        combotimeout.setSuffix('ms')
+        combotimeout.setSingleStep(2)
+        combotimeout.setValue(2)
+        combotimeout.setSuffix('s')
 
         combotimeout.valueChanged.connect(self.comboTimeout)
 
@@ -118,19 +127,16 @@ class Window(QtGui.QWidget):
 
         layoutV2 = QtGui.QVBoxLayout()
         layoutV2.addWidget(lblport)
+        layoutV2.addWidget(comboport)
         layoutV2.addWidget(lblbr)
+        layoutV2.addWidget(combolbr)
         layoutV2.addWidget(lbltimeout)
-
-        layoutV3 = QtGui.QVBoxLayout()
-        layoutV3.addWidget(comboport)
-        layoutV3.addWidget(combolbr)
-        layoutV3.addWidget(combotimeout)
+        layoutV2.addWidget(combotimeout)
 
 
         layoutH1 = QtGui.QHBoxLayout()
         layoutH1.addLayout(layoutV1)
         layoutH1.addLayout(layoutV2)
-        layoutH1.addLayout(layoutV3)
 
         layoutH2 = QtGui.QHBoxLayout()
         layoutH2.addWidget(lblstatus)
@@ -214,7 +220,8 @@ class Window(QtGui.QWidget):
             self.lblst.setText('Serial port is closed')
 
     def update_text(self):
-        self.re.setText(self.ssub.line)
+        if self.ssub.line != '':
+            self.re.appendPlainText(self.ssub.line)
 
 
 
