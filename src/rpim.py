@@ -613,12 +613,22 @@ class Window(QtGui.QWidget):
 
       ## PLAIN TEXT ##
 
+      # For ROV tab
+
       # Create plain text
       self.StatusText = QtGui.QPlainTextEdit("Waiting for first message")
       # With this, the user wont be able to edit plain text
       self.StatusText.setReadOnly(1)
       # Scroll automatically to the bottom of the text
       self.StatusText.centerCursor()
+
+      # For PCAS tab
+
+      self.StatusText2 = QtGui.QPlainTextEdit("Waiting for first message")
+      # With this, the user wont be able to edit plain text
+      self.StatusText2.setReadOnly(1)
+      # Scroll automatically to the bottom of the text
+      self.StatusText2.centerCursor()
 
       ## IMAGE VIEW ##
 
@@ -716,6 +726,7 @@ class Window(QtGui.QWidget):
       splitterpcas = QtGui.QSplitter(self)
       splitterpcas.addWidget(self.pcas)
       splitterpcas.addWidget(self.imgwinpcas)
+      splitterpcas.addWidget(self.StatusText2)
 
       # BtnUP and btnDOWN vertical between them (with joystick), form layoutV2
       layout1V1 = QtGui.QVBoxLayout()
@@ -930,6 +941,7 @@ class Window(QtGui.QWidget):
         value changes
         '''
         self.StatusText.appendPlainText('obstacle =' + self.altimeter.datastring)
+        self.StatusText2.appendPlainText('obstacle =' + self.altimeter.datastring)
 
     def update_pose_plot(self):
         ''' This function updates the pose of the ROV and adds it to its trajectory in the
