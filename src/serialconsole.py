@@ -171,6 +171,7 @@ class Window(QtGui.QWidget):
         self.port = str(text)
         self.serconn.port = str(text)
         self.ssub.port = str(text)
+        rospy.set_param('sds_port', self.port)
         if self.serconn.is_open:
             self.lblst.setText('Serial port is open')
         else:

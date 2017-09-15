@@ -23,6 +23,7 @@ from sensor_msgs.msg import Image
 # For the thrusters publisher
 from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import PointCloud
+from sensor_msgs.msg import Range
 
 import pcl
 
@@ -164,6 +165,21 @@ class pose_subscriber(QObject):
           # Emit signal
           signal1.emit()
           signal2.emit()
+
+class altimeter_subscriber(QObject):
+
+    newsonarrange = pyqtSignal()
+
+    def subscribe(self, signal1):
+        " Subscribes to range topic "
+        self.range = 0
+        self.datastring = ''
+        rospy.Subscriber("/range", Range, self.altimeter_callback, (signal1))
+
+    def altimeter_callback(self,data,signal1):
+        self.range = data.range
+        self.datastring = "{:.2f}".format(self.range)
+        signal1.emit()
 
 class Joystick_thread(QThread):
     """ *Joystick_thread* class creates a thread apart that updates the joystick measurement
@@ -342,9 +358,38 @@ class Window(QtGui.QWidget):
       lblnav = QtGui.QLabel('Navigation Mode', self)
 
       # For PCAS
-      lblnavpcas = QtGui.QLabel('Speed & Direction control', self)
+      lblnavpcas                = QtGui.QLabel('Speed & Direction control', self)
+      lblprofiling_sonar        = QtGui.QLabel('Profiling Sonar', self)
+      lblprofiler_port_pcas     = QtGui.QLabel('Port', self)
+      lblprofiler_pow_channel   = QtGui.QLabel('Power Supply Channel', self)
+      lblprofiler_data_channel  = QtGui.QLabel('Data Channel', self)
+
+      lineprofcoll = QtGui.QFrame() # linea separatoria
+      lineprofcoll.setFrameShape(QtGui.QFrame.HLine)
+      lineprofcoll.setFrameShadow(QtGui.QFrame.Sunken)
+
+      lblcoll_camera            = QtGui.QLabel('Collision Camera', self)
+      lblcollcamera_port_pcas   = QtGui.QLabel('Port', self)
+      lblcam_pow_channel        = QtGui.QLabel('Power Supply Channel', self)
+      lblcam_data_channel       = QtGui.QLabel('Data Channel', self)
+
+      linecollson = QtGui.QFrame() # linea separatoria
+      linecollson.setFrameShape(QtGui.QFrame.HLine)
+      linecollson.setFrameShadow(QtGui.QFrame.Sunken)
+
+      lblsonar_alt              = QtGui.QLabel('Sonar Altimeter')
+      lblsonaralt_port_pcas     = QtGui.QLabel('Port', self)
+      lblalt_pow_channel   = QtGui.QLabel('Power Supply Channel', self)
+      lblalt_data_channel   = QtGui.QLabel('Data Channel', self)
+
+      linesonbut = QtGui.QFrame() # linea separatoria
+      linesonbut.setFrameShape(QtGui.QFrame.HLine)
+      linesonbut.setFrameShadow(QtGui.QFrame.Sunken)
 
       ## COMBO BOX ##
+
+      # ROV
+
       guimode = QtGui.QComboBox(self)
       guimode.addItem("Simulator")
       guimode.addItem("Real ROV")
@@ -352,6 +397,81 @@ class Window(QtGui.QWidget):
       navmode = QtGui.QComboBox(self)
       navmode.addItem("Teleoperated")
       navmode.addItem("Autonomous")
+
+      # PCAS
+
+      # select serial port
+
+      # for profiler
+      comboprofiler_port_pcas = QtGui.QComboBox(self)
+      comboprofiler_port_pcas.addItem("/dev/ttyUSB0")
+      comboprofiler_port_pcas.addItem("/dev/ttyUSB1")
+      comboprofiler_port_pcas.addItem("/dev/ttyUSB2")
+      comboprofiler_port_pcas.addItem("/dev/ttyUSB3")
+      comboprofiler_port_pcas.addItem("/dev/ttyUSB4")
+      comboprofiler_port_pcas.setEditable(True)
+
+      comboprofiler_pow_channel = QtGui.QComboBox(self)
+      comboprofiler_pow_channel.addItem("A")
+      comboprofiler_pow_channel.addItem("B")
+      comboprofiler_pow_channel.addItem("C")
+
+      comboprofiler_data_channel = QtGui.QComboBox(self)
+      comboprofiler_data_channel.addItem("1")
+      comboprofiler_data_channel.addItem("2")
+
+      # for camera
+      combocollcamera_port_pcas = QtGui.QComboBox(self)
+      combocollcamera_port_pcas.addItem("/dev/ttyUSB0")
+      combocollcamera_port_pcas.addItem("/dev/ttyUSB1")
+      combocollcamera_port_pcas.addItem("/dev/ttyUSB2")
+      combocollcamera_port_pcas.addItem("/dev/ttyUSB3")
+      combocollcamera_port_pcas.addItem("/dev/ttyUSB4")
+      combocollcamera_port_pcas.setEditable(True)
+
+      combocam_pow_channel = QtGui.QComboBox(self)
+      combocam_pow_channel.addItem("A")
+      combocam_pow_channel.addItem("B")
+      combocam_pow_channel.addItem("C")
+
+      combocam_data_channel = QtGui.QComboBox(self)
+      combocam_data_channel.addItem("1")
+      combocam_data_channel.addItem("2")
+
+      # for altimeter
+      combosonaralt_port_pcas = QtGui.QComboBox(self)
+      combosonaralt_port_pcas.addItem("/dev/ttyUSB0")
+      combosonaralt_port_pcas.addItem("/dev/ttyUSB1")
+      combosonaralt_port_pcas.addItem("/dev/ttyUSB2")
+      combosonaralt_port_pcas.addItem("/dev/ttyUSB3")
+      combosonaralt_port_pcas.addItem("/dev/ttyUSB4")
+      combosonaralt_port_pcas.setEditable(True)
+
+      comboalt_pow_channel = QtGui.QComboBox(self)
+      comboalt_pow_channel.addItem("A")
+      comboalt_pow_channel.addItem("B")
+      comboalt_pow_channel.addItem("C")
+
+      comboalt_data_channel = QtGui.QComboBox(self)
+      comboalt_data_channel.addItem("1")
+      comboalt_data_channel.addItem("2")
+
+      ## CHECKBOX ##
+
+      # PCAS
+
+      # For power transmission selection
+
+      cb_profiler_power = QtGui.QCheckBox('Power Up', self)
+      cb_cam_power = QtGui.QCheckBox('Power Up', self)
+      cb_alt_power = QtGui.QCheckBox('Power Up', self)
+
+      # For data transmission selection
+
+      cb_profiler_data = QtGui.QCheckBox('Data Transmission', self)
+      cb_cam_data = QtGui.QCheckBox('Data Transmission', self)
+      cb_alt_data = QtGui.QCheckBox('Data Transmission', self)
+
 
 
       ## JOYSTICK ##
@@ -542,6 +662,10 @@ class Window(QtGui.QWidget):
       pointplot = gl.GLScatterPlotItem(pos=real_pose, color=(1, 1, 1, 1), size=0.1)
       self.pcas.addItem(pointplot)
 
+      # For sonar altimeter
+      self.altimeter = altimeter_subscriber()
+
+
       ## TABS ##
       tab_widget = QtGui.QTabWidget()
       tab1 = QtGui.QWidget()
@@ -605,8 +729,68 @@ class Window(QtGui.QWidget):
       layout1H1.addLayout(layout1V1)
       layout1H1.addWidget(btnRGTpcas)
 
-      #label vertical
+      # Grouping sensor labels with their combo boxes
+
+      layout1Hport_profiler = QtGui.QHBoxLayout()
+      layout1Hport_profiler.addWidget(lblprofiler_port_pcas)
+      layout1Hport_profiler.addWidget(comboprofiler_port_pcas)
+
+      layout1Hport_profiler2 = QtGui.QHBoxLayout()
+      layout1Hport_profiler2.addWidget(lblprofiler_pow_channel)
+      layout1Hport_profiler2.addWidget(comboprofiler_pow_channel)
+
+      layout1Hport_profiler3 = QtGui.QHBoxLayout()
+      layout1Hport_profiler3.addWidget(lblprofiler_data_channel)
+      layout1Hport_profiler3.addWidget(comboprofiler_data_channel)
+
+      layout1Hport_collcamera = QtGui.QHBoxLayout()
+      layout1Hport_collcamera.addWidget(lblcollcamera_port_pcas)
+      layout1Hport_collcamera.addWidget(combocollcamera_port_pcas)
+
+      layout1Hport_collcamera2 = QtGui.QHBoxLayout()
+      layout1Hport_collcamera2.addWidget(lblcam_pow_channel)
+      layout1Hport_collcamera2.addWidget(combocam_pow_channel)
+
+      layout1Hport_collcamera3 = QtGui.QHBoxLayout()
+      layout1Hport_collcamera3.addWidget(lblcam_data_channel)
+      layout1Hport_collcamera3.addWidget(combocam_data_channel)
+
+      layout1Hport_sonaralt = QtGui.QHBoxLayout()
+      layout1Hport_sonaralt.addWidget(lblsonaralt_port_pcas)
+      layout1Hport_sonaralt.addWidget(combosonaralt_port_pcas)
+
+      layout1Hport_sonaralt2 = QtGui.QHBoxLayout()
+      layout1Hport_sonaralt2.addWidget(lblalt_pow_channel)
+      layout1Hport_sonaralt2.addWidget(comboalt_pow_channel)
+
+      layout1Hport_sonaralt3 = QtGui.QHBoxLayout()
+      layout1Hport_sonaralt3.addWidget(lblalt_data_channel)
+      layout1Hport_sonaralt3.addWidget(comboalt_data_channel)
+
+
+      #label vertical, with nav buttons and combo boxes
       layout1V2 = QtGui.QVBoxLayout()
+      layout1V2.addWidget(lblprofiling_sonar)
+      layout1V2.addLayout(layout1Hport_profiler)
+      layout1V2.addLayout(layout1Hport_profiler2)
+      layout1V2.addLayout(layout1Hport_profiler3)
+      layout1V2.addWidget(cb_profiler_power)
+      layout1V2.addWidget(cb_profiler_data)
+      layout1V2.addWidget(lineprofcoll)
+      layout1V2.addWidget(lblcoll_camera)
+      layout1V2.addLayout(layout1Hport_collcamera)
+      layout1V2.addLayout(layout1Hport_collcamera2)
+      layout1V2.addLayout(layout1Hport_collcamera3)
+      layout1V2.addWidget(cb_cam_power)
+      layout1V2.addWidget(cb_cam_data)
+      layout1V2.addWidget(linecollson)
+      layout1V2.addWidget(lblsonar_alt)
+      layout1V2.addLayout(layout1Hport_sonaralt)
+      layout1V2.addLayout(layout1Hport_sonaralt2)
+      layout1V2.addLayout(layout1Hport_sonaralt3)
+      layout1V2.addWidget(cb_alt_power)
+      layout1V2.addWidget(cb_alt_data)
+      layout1V2.addWidget(linesonbut)
       layout1V2.addWidget(lblnavpcas)
       layout1V2.addLayout(layout1H1)
 
@@ -632,13 +816,15 @@ class Window(QtGui.QWidget):
       ## SIGNALS ##
 
       # Create signal for the Plain text, connect to update_string function
-      self.ps.newstring.connect(self.update_string)
+      #self.ps.newstring.connect(self.update_string)
       self.ps.newscatter.connect(self.update_pose_plot)
       # Signal for the new image received
       # for ROV
       self.ic.newcameraimage.connect(self.update_ROV_image)
       # for collision avoidance camera
       self.collision_ic.newcameraimage.connect(self.update_collisioncam_image)
+      # For altimeter
+      self.altimeter.newsonarrange.connect(self.update_string)
 
       # Profiling Sonar PointCloud
       self.PS_PC = ProfilingSonar_PC()
@@ -649,6 +835,7 @@ class Window(QtGui.QWidget):
 
       # Subscribe to pose message that needs to be displayed
       self.ps.subscribe(self.ps.newstring,self.ps.newscatter)
+      self.altimeter.subscribe(self.altimeter.newsonarrange)
       self.ic.subscribe(self.ic.newcameraimage,"/uwsim/camera1")
       self.collision_ic.subscribe(self.collision_ic.newcameraimage,"/v4l/bowtech_camera/image_raw")
 
@@ -742,7 +929,7 @@ class Window(QtGui.QWidget):
         ''' This function updates the text value fron the PlainText widget every time the
         value changes
         '''
-        self.StatusText.appendPlainText('z =' + self.ps.datastring)
+        self.StatusText.appendPlainText('obstacle =' + self.altimeter.datastring)
 
     def update_pose_plot(self):
         ''' This function updates the pose of the ROV and adds it to its trajectory in the
