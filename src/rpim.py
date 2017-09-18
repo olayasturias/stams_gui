@@ -32,6 +32,27 @@ import pcl
 : file rov_ui.py
 """
 
+class SDS_Params():
+    def __init__(self):
+        print 'init'
+        self.profiler_pow_channel  = 'A'
+        self.camera_pow_channel    = 'A'
+        self.altimeter_pow_channel = 'A'
+
+        self.profiler_pow_enabled   = 0
+        self.camera_pow_enabled     = 0
+        self.altimeter_pow_enabled  = 0
+
+        self.profiler_data_channel  = '1'
+        self.camera_data_channel    = '1'
+        self.altimeter_data_channel = '1'
+
+    def parse_params(self):
+        self.profiler_pow_message  = '+++' + str(self.profiler_pow_channel) + str(self.profiler_pow_enabled) +' ;'
+        self.camera_pow_message    = '+++' + str(self.camera_pow_channel)   + str(self.camera_pow_enabled)   + ';'
+        self.altimeter_pow_message = '+++' + str(self.altimeter_pow_channel)+ str(self.altimeter_pow_enabled)+ ';'
+
+
 class MyGLView(gl.GLViewWidget):
     """ *MyGLView* class inherits from GLViewWidget class, and overwrites the *paintGL* and *mousePresEvent* methods
     to provide personalised capabilities.
@@ -207,7 +228,7 @@ class Joystick_thread(QThread):
       '''
       QtCore.QThread.__init__(self)
       self.signal = QtCore.SIGNAL("signal")
-      self.mutex = QtCore.QMutex(mode = QMutex.Recursive)
+      self.mutex  = QtCore.QMutex(mode = QMutex.Recursive)
       self.is_locked = 0
 
     def run(self):
@@ -344,6 +365,9 @@ class Window(QtGui.QWidget):
       # Global variable for the 3D graphics
       global win,curve
 
+      # Class with Profiler/Camera and Altimeter parameters
+      self.SDS_params = SDS_Params()
+
       ## TOOLTIPS ##
 
       # Font used to render tooltips, and text displayed
@@ -379,8 +403,8 @@ class Window(QtGui.QWidget):
 
       lblsonar_alt              = QtGui.QLabel('Sonar Altimeter')
       lblsonaralt_port_pcas     = QtGui.QLabel('Port', self)
-      lblalt_pow_channel   = QtGui.QLabel('Power Supply Channel', self)
-      lblalt_data_channel   = QtGui.QLabel('Data Channel', self)
+      lblalt_pow_channel        = QtGui.QLabel('Power Supply Channel', self)
+      lblalt_data_channel       = QtGui.QLabel('Data Channel', self)
 
       linesonbut = QtGui.QFrame() # linea separatoria
       linesonbut.setFrameShape(QtGui.QFrame.HLine)
@@ -404,11 +428,6 @@ class Window(QtGui.QWidget):
 
       # for profiler
       comboprofiler_port_pcas = QtGui.QComboBox(self)
-      comboprofiler_port_pcas.addItem("/dev/ttyUSB0")
-      comboprofiler_port_pcas.addItem("/dev/ttyUSB1")
-      comboprofiler_port_pcas.addItem("/dev/ttyUSB2")
-      comboprofiler_port_pcas.addItem("/dev/ttyUSB3")
-      comboprofiler_port_pcas.addItem("/dev/ttyUSB4")
       comboprofiler_port_pcas.setEditable(True)
 
       comboprofiler_pow_channel = QtGui.QComboBox(self)
@@ -416,17 +435,18 @@ class Window(QtGui.QWidget):
       comboprofiler_pow_channel.addItem("B")
       comboprofiler_pow_channel.addItem("C")
 
+      # connect to funcions
+      comboprofiler_pow_channel.activated[str].connect(self.ComboProfiler_Pow_Activated)
+
       comboprofiler_data_channel = QtGui.QComboBox(self)
       comboprofiler_data_channel.addItem("1")
       comboprofiler_data_channel.addItem("2")
 
+      # connect to funcions
+      comboprofiler_data_channel.activated[str].connect(self.ComboProfiler_Data_Activated)
+
       # for camera
       combocollcamera_port_pcas = QtGui.QComboBox(self)
-      combocollcamera_port_pcas.addItem("/dev/ttyUSB0")
-      combocollcamera_port_pcas.addItem("/dev/ttyUSB1")
-      combocollcamera_port_pcas.addItem("/dev/ttyUSB2")
-      combocollcamera_port_pcas.addItem("/dev/ttyUSB3")
-      combocollcamera_port_pcas.addItem("/dev/ttyUSB4")
       combocollcamera_port_pcas.setEditable(True)
 
       combocam_pow_channel = QtGui.QComboBox(self)
@@ -434,27 +454,41 @@ class Window(QtGui.QWidget):
       combocam_pow_channel.addItem("B")
       combocam_pow_channel.addItem("C")
 
+      # connect to funcions
+      combocam_pow_channel.activated[str].connect(self.ComboCamera_Pow_Activated)
+
       combocam_data_channel = QtGui.QComboBox(self)
       combocam_data_channel.addItem("1")
       combocam_data_channel.addItem("2")
 
+      # connect to funcions
+      combocam_data_channel.activated[str].connect(self.ComboCamera_Data_Activated)
+
       # for altimeter
       combosonaralt_port_pcas = QtGui.QComboBox(self)
-      combosonaralt_port_pcas.addItem("/dev/ttyUSB0")
-      combosonaralt_port_pcas.addItem("/dev/ttyUSB1")
-      combosonaralt_port_pcas.addItem("/dev/ttyUSB2")
-      combosonaralt_port_pcas.addItem("/dev/ttyUSB3")
-      combosonaralt_port_pcas.addItem("/dev/ttyUSB4")
       combosonaralt_port_pcas.setEditable(True)
+
+      # Add labels to combo box options
+      for i in range (0, 4):
+          comboprofiler_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
+          combocollcamera_port_pcas.addItem("/dev/ttyUSB" + str(i))
+          combosonaralt_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
+
 
       comboalt_pow_channel = QtGui.QComboBox(self)
       comboalt_pow_channel.addItem("A")
       comboalt_pow_channel.addItem("B")
       comboalt_pow_channel.addItem("C")
 
+      # connect to funcions
+      comboalt_pow_channel.activated[str].connect(self.ComboAltimeter_Pow_Activated)
+
       comboalt_data_channel = QtGui.QComboBox(self)
       comboalt_data_channel.addItem("1")
       comboalt_data_channel.addItem("2")
+
+      # connect to funcions
+      comboalt_data_channel.activated[str].connect(self.ComboAltimeter_Data_Activated)
 
       ## CHECKBOX ##
 
@@ -463,14 +497,14 @@ class Window(QtGui.QWidget):
       # For power transmission selection
 
       cb_profiler_power = QtGui.QCheckBox('Power Up', self)
-      cb_cam_power = QtGui.QCheckBox('Power Up', self)
-      cb_alt_power = QtGui.QCheckBox('Power Up', self)
+      cb_cam_power      = QtGui.QCheckBox('Power Up', self)
+      cb_alt_power      = QtGui.QCheckBox('Power Up', self)
 
       # For data transmission selection
 
       cb_profiler_data = QtGui.QCheckBox('Data Transmission', self)
-      cb_cam_data = QtGui.QCheckBox('Data Transmission', self)
-      cb_alt_data = QtGui.QCheckBox('Data Transmission', self)
+      cb_cam_data      = QtGui.QCheckBox('Data Transmission', self)
+      cb_alt_data      = QtGui.QCheckBox('Data Transmission', self)
 
 
 
@@ -479,13 +513,9 @@ class Window(QtGui.QWidget):
 
       self.jb.setFixedWidth(120)
       self.jb.setFixedHeight(120)
-      region = QtGui.QRegion(QtCore.QRect(self.jb.x()+5,
-                                      self.jb.y()+5
-                                       ,110
-                                      ,110)
-                                      ,QtGui.QRegion.Ellipse)
+      region = QtGui.QRegion(QtCore.QRect(self.jb.x()+5, self.jb.y()+5 ,110 ,110), QtGui.QRegion.Ellipse)
       self.jb.setStyleSheet("background-color: rgb(176,196,222);\n"
-                                          "border:1px solid rgb(0,0,0);")
+                            "border:1px solid rgb(0,0,0);")
       self.jb.setMask(region)
 
       self.jthread = Joystick_thread()
@@ -678,8 +708,8 @@ class Window(QtGui.QWidget):
 
       ## TABS ##
       tab_widget = QtGui.QTabWidget()
-      tab1 = QtGui.QWidget()
-      tab2 = QtGui.QWidget()
+      tab1       = QtGui.QWidget()
+      tab2       = QtGui.QWidget()
 
       ## POSITIONING ##
 
@@ -1033,6 +1063,37 @@ class Window(QtGui.QWidget):
         thrusters[2] = thrusters[3]= -1
         msg.data = thrusters
         pub.publish(msg)
+
+    def ComboProfiler_Pow_Activated(self,text):
+        """This funcion is called when the Profiling Sonar combo box for selection of Power Supply Channel is activated.
+        Here the value saved in the SDS_Params class for the Power supply channel of the Profiling sonar is updated."""
+        self.SDS_params.profiler_pow_channel = text
+
+    def ComboProfiler_Data_Activated(self,text):
+        """This funcion is called when the Profiling Sonar combo box for selection of Power Supply Channel is activated.
+        Here the value saved in the SDS_Params class for the Power supply channel of the Profiling sonar is updated."""
+        self.SDS_params.profiler_data_channel = text
+
+    def ComboCamera_Pow_Activated(self,text):
+        """This funcion is called when the Collision camera combo box for selection of Power Supply Channel is activated.
+        Here the value saved in the SDS_Params class for the Power supply channel of the Collision camera is updated."""
+        self.SDS_params.camera_pow_channel = text
+
+    def ComboCamera_Data_Activated(self,text):
+        """This funcion is called when the Collision camera combo box for selection of Power Supply Channel is activated.
+        Here the value saved in the SDS_Params class for the Power supply channel of the Collision camera is updated."""
+        self.SDS_params.camera_data_channel = text
+
+    def ComboAltimeter_Pow_Activated(self,text):
+        """This funcion is called when the Sonar altimeter combo box for selection of Power Supply Channel is activated.
+        Here the value saved in the SDS_Params class for the Power supply channel of the Sonar altimeter is updated."""
+        self.SDS_params.altimeter_pow_channel = text
+
+    def ComboAltimeter_Data_Activated(self,text):
+        """This funcion is called when the Sonar altimeter combo box for selection of Power Supply Channel is activated.
+        Here the value saved in the SDS_Params class for the Power supply channel of the Sonar altimeter is updated."""
+        self.SDS_params.altimeter_data_channel = text
+
 
 def main():
     rospy.init_node('guilistener', anonymous=True)
