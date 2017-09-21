@@ -19,7 +19,6 @@ class SerialSubscribe(QThread):
 
     def run(self):
         while 1:
-            time.sleep(0.01)
             try:
                 self.line = self.channel.readline()
                 self.emit(self.signal, "line read")
