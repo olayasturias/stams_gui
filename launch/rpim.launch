@@ -21,6 +21,14 @@
     <param name="frame" value="$(arg frame)"/>
   </node>
 
+  <!-- Launch Valeport Altimeter -->
+  <node name="valeport_altimeter"
+        pkg="valeport_altimeter"
+        type="altimeter.py"
+        output="screen"
+        respawn="true">
+  </node>
+
   <!-- Launch camera -->
   <!-- Set this to your camera's name -->
   <arg name="cam_name" value="bowtech_camera" />
