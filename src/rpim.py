@@ -16,7 +16,7 @@ import pyqtgraph.opengl as gl
 import numpy as np
 import scipy.ndimage as ndi
 # For subscribers
-import cv2
+#import cv2
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Pose
 from sensor_msgs.msg import Image
@@ -70,11 +70,13 @@ class SDS_Params():
     def send(self, port, message):
         ser = serial.Serial(port,self.baudrate)
         ser.write(message)
+        print message
         ser.close()
 
     def change_baudrate(self):
         ser = serial.Serial(self.profiler_channel,self.previous_baudrate)
         ser.write(self.baudrate_message)
+        print self.baudrate_message
         ser.close()
 
 class MyGLView(gl.GLViewWidget):
@@ -455,8 +457,8 @@ class Window(QtGui.QWidget):
       # baudrate (sent only to SDS)
 
       comboBaudrate = QtGui.QComboBox(self)
-      comboBaudrate.addItem("57600")
       comboBaudrate.addItem("115200")
+      comboBaudrate.addItem("57600")
       comboBaudrate.addItem("38400")
       comboBaudrate.addItem("28800")
       comboBaudrate.addItem("19200")
