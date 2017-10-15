@@ -1,6 +1,6 @@
 <launch>
   <!-- Read arguments -->
-  <arg name="port" default="/dev/sonar"/>
+  <arg name="port" default="/dev/ttyUSB0"/>
   <arg name="frame" default="sonar"/>
   <!-- Launch user interface -->
   <node name="rpim"
@@ -14,6 +14,14 @@
   <node name="tritech_profiler"
         pkg="tritech_profiler"
         type="scan.py"
+        output="screen"
+        respawn="true">
+  </node>
+
+  <!-- Launch Valeport Altimeter -->
+  <node name="valeport altimeter"
+        pkg="valeport_altimeter"
+        type="altimeter.py"
         output="screen"
         respawn="true">
     <!-- Set ROS parameters -->

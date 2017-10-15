@@ -917,7 +917,6 @@ class Window(QtGui.QWidget):
       # Subscribe to pose message that needs to be displayed
       self.ps.subscribe(self.ps.newstring,self.ps.newscatter)
       self.altimeter.subscribe(self.altimeter.newsonarrange)
-      self.ic.subscribe(self.ic.newcameraimage,"/uwsim/camera1")
       self.collision_ic.subscribe(self.collision_ic.newcameraimage,"/v4l/bowtech_camera/image_raw")
 
       ## DISPLAY WIDGET ##
@@ -998,12 +997,12 @@ class Window(QtGui.QWidget):
         """
         dx,dy = self.jb.getState()
         thrusters=[0,0,0,0,0]
-        pub = rospy.Publisher("/g500/thrusters_input", Float64MultiArray, queue_size=10)
-        msg = Float64MultiArray()
+        #pub = rospy.Publisher("/g500/thrusters_input", Float64MultiArray, queue_size=10)
+        #msg = Float64MultiArray()
         thrusters[0]=thrusters[1]=dy
         thrusters[4]=-dx
-        msg.data = thrusters
-        pub.publish(msg)
+        #msg.data = thrusters
+        #pub.publish(msg)
 
 
     def update_string(self):
