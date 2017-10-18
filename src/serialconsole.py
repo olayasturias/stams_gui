@@ -39,7 +39,7 @@ class Window(QtGui.QWidget):
 
         ## Variables for serial communication ##
         self.port = '/dev/ttyUSB0'
-        self.baudrate = 57600
+        self.baudrate = 115200
         self.timeout = 1000
 
         ## LABELS ##
