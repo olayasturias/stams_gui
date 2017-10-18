@@ -10,6 +10,16 @@
         respawn="false">
   </node>
 
+      <!-- Launch Profiling Sonar -->
+  <node name="tritech_profiler"
+        pkg="tritech_profiler"
+        type="scan.py"
+        output="screen"
+        respawn="true">
+    <!-- Set ROS parameters -->
+    <param name="port" value="$(arg port)"/>
+    <param name="frame" value="$(arg frame)"/>
+  </node>
 
   <!-- Launch Valeport Altimeter -->
   <node name="valeport_altimeter"
@@ -24,16 +34,15 @@
   <arg name="cam_name" value="bowtech_camera" />
   <arg name="DEVICE" default="/dev/video1"/>
 
-    <!-- Launch Profiling Sonar -->
-  <node name="tritech_profiler"
-        pkg="tritech_profiler"
-        type="scan.py"
+
+      <!-- Launch rqt_reconfigure Sonar -->
+  <node name="rqt_reconfigure"
+        pkg="rqt_reconfigure"
+        type="rqt_reconfigure"
         output="screen"
-        respawn="true">
-    <!-- Set ROS parameters -->
-    <param name="port" value="$(arg port)"/>
-    <param name="frame" value="$(arg frame)"/>
+        >
   </node>
+
 
 
   <!-- The GStreamer framerate needs to be an integral fraction -->

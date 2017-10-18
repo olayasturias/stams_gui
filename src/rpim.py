@@ -542,8 +542,11 @@ class Window(QtGui.QWidget):
       # For power transmission selection
 
       self.cb_profiler_power = QtGui.QCheckBox('Power Up', self)
+      self.cb_profiler_power.setChecked(True)
       self.cb_cam_power      = QtGui.QCheckBox('Power Up', self)
+      self.cb_cam_power.setChecked(True)
       self.cb_alt_power      = QtGui.QCheckBox('Power Up', self)
+      self.cb_alt_power.setChecked(True)
 
       # Callbacks
 
