@@ -25,6 +25,8 @@ from sensor_msgs.msg import Range
 
 import serial
 
+import dynamic_reconfigure.client
+
 # For subscribers
 #import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -36,7 +38,44 @@ from cv_bridge import CvBridge, CvBridgeError
 : file rov_ui.py
 """
 
+class ParameterServer_Params(QThread):
+    """
+    This class includes the variables that the sensors have available in the ROS Parameter Server so they can be
+    dinamically reconfigured from the User Interface.
+
+    It is required for this parameters to be in a separate class, because in case of the sensors not being initialized
+    yet, the variable cannot be defined and the Interface would freeze. Having it in a separate class, we run the
+    definition of the variable in a separate thread so it doesn't freeze the Interface.
+
+    **Atributes**:
+
+    .. data:: profiler_client
+
+    the client of the elements for the dynamic configuration of the Tritech Profiler's
+    parameters.
+
+    """
+    def __init__(self):
+        QtCore.QThread.__init__(self)
+        self.profiler_client = None
+        self.valeport_altimeter = None
+        self.bowtech_camera = None
+
+    def run(self):
+        """
+        The run method is a overun method of the QThread class, and starts when required in a separate thread.
+
+        """
+        self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
+
+
+
 class SDS_Params():
+    """ The *SDS_params* class contains all the required elements to command the Serial Data Switch.
+    The SDS allows to power on and off the Tritech Profiler, the Sonar Altimeter and the Bowtech Camera.
+    It also switches the information channel between the Tritech Profiler and the Sonar altimeter, since
+    they cannot both transmit at the same time.
+    """
     def __init__(self):
 
         self.baudrate = 115200
@@ -59,6 +98,12 @@ class SDS_Params():
         self.altimeter_data_channel = '1'
 
     def parse_params(self):
+        """
+        This function parses the string messages that need to be transmitted to the SDS board to accomplish the
+        required tasks
+
+        :return:
+        """
         self.profiler_pow_message  = '+++' + str(self.profiler_pow_channel) + str(self.profiler_pow_enabled) +' ;'
         self.camera_pow_message    = '+++' + str(self.camera_pow_channel)   + str(self.camera_pow_enabled)   + ';'
         self.altimeter_pow_message = '+++' + str(self.altimeter_pow_channel)+ str(self.altimeter_pow_enabled)+ ';'
@@ -70,6 +115,14 @@ class SDS_Params():
         self.baudrate_message       = '+++' + 'M' + str('C' if (self.baudrate == 115200) else self.baudrate/9600)+';'
 
     def send(self, port, message):
+        """
+        Send the message with the configuration parameters to the SDS board
+
+        :param port: communication port in which the SDS is connected to
+        :param message: command to send to the SDS board
+
+        :return:
+        """
         ser = serial.Serial(port,self.baudrate)
         print self.baudrate
         ser.write(message)
@@ -217,16 +270,30 @@ class pose_subscriber(QObject):
           signal2.emit()
 
 class altimeter_subscriber(QObject):
-
+    """
+    This class subscribes to the topic that includes the data read by the Altimeter, and emits the signal that
+    updates the value shown in the User Interface
+    """
     newsonarrange = pyqtSignal()
 
     def subscribe(self, signal1):
+        """
+        This method defines the subscriber to the topic where the data from the Sonar Altimeter is published
+
+        """
         " Subscribes to range topic "
         self.range = 0
         self.datastring = ''
         rospy.Subscriber("/range", Range, self.altimeter_callback, (signal1))
 
     def altimeter_callback(self,data,signal1):
+        """
+        This method emits the signal that updates the Sonar Altimeter value in the User Interface Screen.
+
+        :param data: this variable stores the last measurement from the Sonar Altimeter
+        :param signal1: this is a input argument, that allows to emit the signal that has been passed through this variable.
+
+        """
         self.range = data.range
         self.datastring = "{:.2f}".format(self.range)
         signal1.emit()
@@ -276,6 +343,14 @@ class ProfilingSonar_PC(QThread):
     """ *ProfilingSonar_PC* executes a thread where the point cloud
     from the Profiling Sonar sensor is read, and the signal is emitted to
     refresh the GUI.
+
+    **Atributes**:
+
+    .. data:: newpcsignal
+
+    Signal that is emitted when the profiling sonar callback is called, i.e., everytime a new message from the
+    Profiling Sonar topic arrives.
+
     """
     def __init__(self):
         ''' Initialize the Point Cloud drawing thread.'''
@@ -297,6 +372,11 @@ class ProfilingSonar_PC(QThread):
     #
     #         self.emit(self.newpcsignal,"profilingsonar PC thread")
     def PS_callback(self,data):
+        """ Callback function associated to the Point Cloud from the Profiling Sonar. Each time a new message arrives
+        (that is, a new point cloud), the code enters in this function and a signal is emitted.
+        This signal updates the Point Cloud viewer of the User Interface.
+
+        """
         self.profiler_PC = data
         self.emit(self.newpcsignal,"profilingsonar PC thread")
 
@@ -944,6 +1024,9 @@ class Window(QtGui.QWidget):
       # Display widget on screen
       self.show()
 
+      ## PARAMETER SERVER ##
+      #self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
+
     def update_PS_PointCloud(self):
         """ This function updates the point cloud every time the signal is emitted from the
         *PointCloud_PC* thread. The point cloud showed is the result from the Profiling Sonar Scanning.
@@ -1125,6 +1208,12 @@ class Window(QtGui.QWidget):
         pub.publish(msg)
 
     def ComboBaudActivated(self, baudtxt):
+        """
+        This method is called everytime the combo box with the Baudrate is activated.
+        It sends the required command for configuring the baudrate in the Serial Data Switch
+        :param baudtxt: the baudrate passed to a string value
+        :return:
+        """
 
         self.SDS_params.previous_baudrate = self.SDS_params.baudrate
         self.SDS_params.baudrate = int(baudtxt)
@@ -1135,12 +1224,24 @@ class Window(QtGui.QWidget):
 
 
     def ComboProfiler_Port_Activated(self,text):
+        """
+        This method is executed everytime the Combo Box for the Profiling Sonar communication port selection is
+        activated.
+        :param text: string value with the name of the port.
+        :return:
+        """
         self.SDS_params.profiler_channel = text
 
     def ComboCamera_Port_Activated(self,text):
         self.SDS_params.camera_channel = text
 
     def ComboAltimeter_Port_Activated(self,text):
+        """
+        This method is executed everytime the Combo Box for the Valeport Altimeter communication port selection is
+        activated.
+        :param text: string value with the name of the port.
+        :return:
+        """
         self.SDS_params.altimeter_channel = text
 
     def ComboProfiler_Pow_Activated(self,text):
@@ -1169,6 +1270,12 @@ class Window(QtGui.QWidget):
         self.SDS_params.altimeter_data_channel = text
 
     def ProfilerPowerCheckbox(self,state):
+        """
+        Method that is executed everytime the state of the Checkbox for enabling/disabling Power supply changes.
+        It involves the Power supply of the Profiling Sonar, and sends the required command to the Serial Data Switch
+        :param state: valiable that stores the state of the checkbox
+        :return:
+        """
         if state == QtCore.Qt.Checked:
             self.SDS_params.profiler_pow_enabled = 1
         else:
@@ -1178,6 +1285,13 @@ class Window(QtGui.QWidget):
         self.SDS_params.send(self.SDS_params.profiler_channel, self.SDS_params.profiler_pow_message)
 
     def CameraPowerCheckbox(self,state):
+        """
+        Method that is executed everytime the state of the Checkbox for enabling/disabling Power supply changes.
+        It involves the Power supply of the AntiCollision Camera, and sends the required command to the Serial Data Switch
+        :param state: valiable that stores the state of the checkbox
+        :return:
+
+        """
         if state == QtCore.Qt.Checked:
             self.SDS_params.camera_pow_enabled = 1
         else:
@@ -1188,6 +1302,12 @@ class Window(QtGui.QWidget):
 
 
     def AltimeterPowerCheckbox(self,state):
+        """
+        Method that is executed everytime the state of the Checkbox for enabling/disabling Power supply changes.
+        It involves the Power supply of the Sonar Altimeter, and sends the required command to the Serial Data Switch
+        :param state: valiable that stores the state of the checkbox
+        :return:
+        """
         if state == QtCore.Qt.Checked:
             self.SDS_params.altimeter_pow_enabled = 1
         else:
@@ -1204,6 +1324,18 @@ class Window(QtGui.QWidget):
             self.SDS_params.send(self.SDS_params.profiler_channel, self.SDS_params.profiler_data_message)
         else:
             self.SDS_params.profiler_data_enabled = 0
+
+        ProfilerParam = ParameterServer_Params()
+
+        profiler_params = {'port_enabled': str(self.SDS_params.profiler_data_enabled)}
+        print profiler_params
+        ProfilerParam.start()
+
+        try:
+            config = ProfilerParam.profiler_client.update_configuration(profiler_params)
+        except:
+            rospy.logwarn("Tritech node not running. Could not update params. Are you sure Profiler is connected?")
+
 
 
     def AltimeterDataCheckbox(self,state):
