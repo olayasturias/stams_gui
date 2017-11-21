@@ -4,16 +4,23 @@
 import time
 import rospy
 import sys
-sys.path.append("/home/olaya/V4LOG_to_point_cloud")
-from v4log_to_scatter import V4LOG_to_py
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import QObject, pyqtSignal, QRunnable, QThread,QThreadPool
 from PyQt4.Qt import QObject, QMutex, QApplication, QThread, QMutexLocker, QEvent,QMouseEvent
+
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+
+import matplotlib.pyplot as plt
+import matplotlib.tri as mtri
+import numpy as np
+
+
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 
-import numpy as np
 import scipy.ndimage as ndi
 # For subscribers
 #import cv2
@@ -25,13 +32,11 @@ from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import PointCloud
 from sensor_msgs.msg import Range
 
-import pcl
-
 import serial
 
 """
 .. codeauthor:: Olaya Alvarez Tunon
-: file rov_ui.py
+: file rpim.py
 """
 
 class SDS_Params():
@@ -79,34 +84,6 @@ class SDS_Params():
         print self.baudrate_message
         ser.close()
 
-class MyGLView(gl.GLViewWidget):
-    """ *MyGLView* class inherits from GLViewWidget class, and overwrites the *paintGL* and *mousePresEvent* methods
-    to provide personalised capabilities.
-    This class provides the same capabilities than GLViewWidget, but additionally it allows to add text in the 3D
-    plot and calls a callback fuction every time the mouse clicks on the widget.
-    """
-    def paintGL(self, *args, **kwds):
-        """
-        *paintGL* method draws over the widget every time it is refreshed. Here the original class is overwriten in order
-        to render text over it
-        :param args: receives a GLViewWidget object
-        :param kwds: receives a GLViewWidget object called "region", it is the area we are writting on.
-        :return:
-        """
-        gl.GLViewWidget.paintGL(self, *args, **kwds)
-        self.qglColor(QtCore.Qt.white)
-        self.renderText(0, 0, 0, 'origin')
-
-
-    def mousePressEvent(self,ev):
-        """
-        *mousePressEvent* method overwrites the function from the parent class. This method is called every time
-        the mouse is clicked on the associated widget.
-        :param ev: the event that executes this class.
-        :return:
-        """
-        self.mousePos = ev.pos()
-        print "pressed button HERE",ev.button(),"at", ev.pos()
 
 
 
@@ -743,10 +720,14 @@ class Window(QtGui.QWidget):
       # For PointCloud from PCAS displaying
 
       # Here I use my class because I wanted to use the mouseclick callback in this widget
-      self.pcas = MyGLView()
-      self.pcas.addItem(g)
-      pointplot = gl.GLScatterPlotItem(pos=real_pose, color=(1, 1, 1, 1), size=0.1)
-      self.pcas.addItem(pointplot)
+      #self.pcas = MyGLView()
+      #self.pcas.addItem(g)
+      self.pcasfigure = plt.figure()
+      self.pcas = FigureCanvas(self.pcasfigure)
+
+      self.toolbar = NavigationToolbar(self.pcas, self)
+      self.toolbar.hide()
+      self.toolbar.zoom()
 
       # For sonar altimeter
       self.altimeter = altimeter_subscriber()
@@ -974,15 +955,34 @@ class Window(QtGui.QWidget):
         # self.scatt_plot_label = MyGLView(self.pcas)
         # self.scatt_plot_label.paintGL(region=self.pcas.getViewport())
 
-        verts = np.array([[0,0,0]])
+        x = np.array(0)
+        y = np.array(0)
+        z = np.array(0)
         for point in self.PS_PC.profiler_PC.points:
-            verts = np.vstack((verts, [point.x,point.y,point.z]))
+            x = np.append(x,point.x)
+            y = np.append(y,point.y)
+            z = np.append(z,point.z)
 
-        color = np.ones((len(verts), 4))
+        #color = np.ones((len(verts), 4))
+        tri = mtri.Triangulation(x, y)
 
-        self.scatt_prof = gl.GLScatterPlotItem(pos=verts,color=color,size=5)
-        self.scatt_prof.setGLOptions('translucent')
-        self.pcas.addItem(self.scatt_prof)
+        ax = self.pcasfigure.add_subplot(111,projection='3d')
+        self.pcasfigure.tight_layout()
+        ax.set_axis_bgcolor('black')
+        black = (0,0,0,0)
+        ax.w_xaxis.set_pane_color(black)
+        ax.w_yaxis.set_pane_color(black)
+        ax.w_zaxis.set_pane_color(black)
+        ax.xaxis.label.set_color('white')
+        ax.yaxis.label.set_color('white')
+        ax.zaxis.label.set_color('white')
+        ax.tick_params(axis='x', colors='white')
+        ax.tick_params(axis='y', colors='white')
+        ax.tick_params(axis='z', colors='white')
+        ax.hold(False)
+        ax.plot_trisurf(x,y,z,triangles=tri.triangles, linewidth=0.2, antialiased=True)
+        ax.auto_scale_xyz([-500,500],[-500,500],[10,-500])
+        self.pcas.draw()
 
     def joystick_changed(self):
         """ This function unlocs the joystick thread, allowing it to update the
