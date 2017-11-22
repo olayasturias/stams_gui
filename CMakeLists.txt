@@ -202,9 +202,14 @@ add_definitions(${PCL_DEFINITIONS})
 
 add_executable(LasertoPC src/LasertoPC.cpp)
 add_executable(PCVisualizer src/PCL_visualizer.cpp)
+add_executable(ScanToWaterfall src/ScanToWaterfall.cpp)
 
 target_link_libraries(LasertoPC ${catkin_LIBRARIES})
 
 target_link_libraries (PCVisualizer ${PCL_LIBRARIES})
+
+target_link_libraries(ScanToWaterfall
+   ${catkin_LIBRARIES}
+)
 
 
