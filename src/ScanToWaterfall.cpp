@@ -18,9 +18,12 @@
 //For keyboard input
 #include <string>
 #include <sstream>
+#include <typeinfo>
 
 
 pcl::PointCloud<pcl::PointXYZ>  total_cloud;
+//For adding fake height
+int h = 0;
 
   std::string topic = "";
 
@@ -64,22 +67,26 @@ public:
    */
   void scanCallback (const sensor_msgs::PointCloud::ConstPtr& scan_in)
   {
-    sensor_msgs::PointCloud cloud;
-    pcl::PointCloud<pcl::PointXYZ>  aux_cloud;
+
+    typedef pcl::PointCloud<pcl::PointXYZ> CloudType;
+    CloudType::Ptr cloud (new CloudType);
+    CloudType::PointType p;
+
     try
     {
         for (int i = 0; i < scan_in->points.size(); i++)
         {
-                aux_cloud.x = scan_in->points[i].x;
-                aux_cloud.y = scan_in->points[i].y;
-                //x = scan_in->points[i].x;
-                //std::cout << x;
-                //y = scan_in->points[i].y;
-                //scan_in->points[i].z = i;
-                for (int k = 0; k< scan_in->points[i].size(); k++)
-                    aux_cloud.z = 0;
-
+                float x, y, z;
+                x = scan_in->points[i].x;
+                y = scan_in->points[i].y;
+                z = scan_in->points[i].z;
+                z += h;
+                p.x = x; p.y = y; p.z = z;
+                cloud->push_back(p);
         }
+        h++;
+
+
 
     }
     catch (tf::TransformException& e)
@@ -88,22 +95,22 @@ public:
         return;
     }
 
-    //Convert sensor_msgs PointCloud2 to pcl::PointCloud<pcl::pointxyz>
-    //pcl::PointCloud<pcl::PointXYZ>  pcl_cloud, aux;
-                  //input | output//
-    //pcl::fromROSMsg(cloud, pcl_cloud);
 
-    //Concatenating total_cloud and pcl_cloud
-    //total_cloud += pcl_cloud;
+    // I need to copy my point cloud to another one of the same format but as a Ptr!
+    pcl::PointCloud<pcl::PointXYZ> aux = pcl::PointCloud<pcl::PointXYZ>(*cloud);
+
+    //std::cout << typeid(aux_ptrCloud).name() << std::endl;
+    //std::cout << typeid(total_cloud).name() << std::endl;
+
+    //Concatenating total_cloud and cloud with single scan
+    total_cloud += aux;
+
 
     //Representing the point cloud
-    //pcl::PointCloud<pcl::PointXYZ>::Ptr draw_cloud (new pcl::PointCloud<pcl::PointXYZ>(total_cloud));
+    pcl::PointCloud<pcl::PointXYZ>::Ptr draw_cloud (new pcl::PointCloud<pcl::PointXYZ>(total_cloud));
+    viewer.showCloud(draw_cloud);
 
-    //viewer.showCloud(draw_cloud);
-    //viewer.showCloud(scan_in);
-
-
-    //waterfall_pub_.publish(cloud);
+    waterfall_pub_.publish(cloud);
 
   }
 };
