@@ -256,7 +256,7 @@ class ProfilingSonar_PC(QThread):
         QtCore.QThread.__init__(self)
         self.newpcsignal = QtCore.SIGNAL("PSsignal")
 
-        rospy.Subscriber("/tritech_profiler/scan",PointCloud,self.PS_callback)
+        rospy.Subscriber("/ProfilingSonar_cloud",PointCloud,self.PS_callback)
     #
     # def run(self):
     #     ''' This function is executed every ___ seconds, and the pointcloud plot signal

@@ -13,6 +13,7 @@
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/conversions.h>
 #include <pcl_ros/transforms.h>
+#include <pcl_ros/point_cloud.h>
 /// Includes for cloud viewer
 #include <pcl/visualization/cloud_viewer.h>
 //For keyboard input
@@ -25,8 +26,6 @@ pcl::PointCloud<pcl::PointXYZ>  total_cloud;
 //For adding fake height
 int h = 0;
 
-  std::string topic = "";
-
 //! Class which reads a LaserScan message from a Profiling Sonar sensor and saves it as point cloud
 /*! This class subscribes to a LaserScan topic from a Profiling Sonar sensor, converts it to a point
  * cloud topic (which is also published) and merges all the point cloud messages that it is processing
@@ -38,26 +37,26 @@ class ScanToWaterfall{
 public:
 
   ros::NodeHandle n_;
-  laser_geometry::LaserProjection projector_;                       /*!< provides the methods to transform from LaserScan to PointCloud */
   tf::TransformListener listener_;                                  /*!< used to transform the point cloud received to the desired frame */
-  message_filters::Subscriber<sensor_msgs::PointCloud> pc_sub_;   /*!< LaserScan suscriber */
+  message_filters::Subscriber<sensor_msgs::PointCloud> pc_sub_;   /*!< PointCloud suscriber */
   tf::MessageFilter<sensor_msgs::PointCloud> pc_notifier_;        /*!< used to execute the callback every time a LaserScan message is received */
   ros::Publisher waterfall_pub_;                                         /*!< ros publisher used to publish the point cloud */
   pcl::visualization::CloudViewer viewer;                           /*!< used to configure the viewer */
 
   ScanToWaterfall(ros::NodeHandle n) :
     n_(n),
-    pc_sub_(n_, topic, 10),
-    pc_notifier_(pc_sub_,listener_, "shaft", 10),
+    pc_sub_(n_, "tritech_profiler/scan", 10),
+    pc_notifier_(pc_sub_,listener_, "world", 10),
     viewer("Profiling Viewer")
   {
+     // Point cloud will be published in /ProfilingSonar_cloud
+    //ros::Publisher waterfall_pub_ = n_.advertise<sensor_msgs::PointCloud>("/ProfilingSonar_cloud",1);
+    ros::Publisher waterfall_pub_ = n_.advertise<sensor_msgs::PointCloud>("/ProfilingSonar_cloud", 1);
+
       //Callback that is executed every time a LaserScan message is received
     pc_sub_.registerCallback(
       boost::bind(&ScanToWaterfall::scanCallback, this, _1));
     pc_notifier_.setTolerance(ros::Duration(0.01));
-
-    // Point cloud will be published in /ProfilingSonar_cloud
-    waterfall_pub_ = n_.advertise<sensor_msgs::PointCloud>("/ProfilingSonar_cloud",1);
   }
 
   //! Callback that is executed every time a LaserScan message is received
@@ -87,17 +86,18 @@ public:
         h++;
 
 
-
     }
     catch (tf::TransformException& e)
     {
         std::cout << e.what();
         return;
     }
+    /*
 
 
     // I need to copy my point cloud to another one of the same format but as a Ptr!
     pcl::PointCloud<pcl::PointXYZ> aux = pcl::PointCloud<pcl::PointXYZ>(*cloud);
+    std::cout << aux.points.x << std::endl;
 
     //std::cout << typeid(aux_ptrCloud).name() << std::endl;
     //std::cout << typeid(total_cloud).name() << std::endl;
@@ -110,7 +110,25 @@ public:
     pcl::PointCloud<pcl::PointXYZ>::Ptr draw_cloud (new pcl::PointCloud<pcl::PointXYZ>(total_cloud));
     viewer.showCloud(draw_cloud);
 
-    waterfall_pub_.publish(cloud);
+    // convert pointcloud to ros msg
+    sensor_msgs::PointCloud2 cloud_msg;
+    pcl::toROSMsg(total_cloud,cloud_msg);
+
+    //std::cout << '*' << std::endl;
+
+    //std::cout << total_cloud << std::endl;
+
+    //std::cout << '*' << std::endl;
+
+    //std::cout << cloud_msg << std::endl;
+    */
+
+
+    if( !waterfall_pub_ ) {
+    ROS_WARN("Publisher invalid!");
+    }
+
+    waterfall_pub_.publish(scan_in);
 
   }
 };
@@ -120,11 +138,6 @@ int main(int argc, char** argv)
 {
 
   ros::init(argc, argv, "my_scan_to_cloud");
-
-
-  /// Creating the object for doing the transformation
-  cout << "Write topic you want to subscribe to (/g500/ProfilingSonar or /g500/multibeam?): ";
-  getline(cin, topic);
 
   ros::NodeHandle n;
   ScanToWaterfall pctowf(n);
