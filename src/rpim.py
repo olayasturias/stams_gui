@@ -30,6 +30,8 @@ import dynamic_reconfigure.client
 # For subscribers
 #import cv2
 from cv_bridge import CvBridge, CvBridgeError
+import cv2
+import imutils
 
 #import pcl
 
@@ -206,12 +208,13 @@ class image_converter(QObject):
       try:
         # Read and convert data
         self.cv_image = bridge.imgmsg_to_cv2(data, "rgb8")
+        rotated = imutils.rotate_bound(self.cv_image,90)
+        self.cv_image = rotated
         # Emit the signal associated
         signal.emit()
       except CvBridgeError as e:
         print(e)
-      #cv2.imshow("Image window", self.cv_image)
-      #cv2.waitKey(3)
+
 
 class pose_subscriber(QObject):
     """ The *pose_subscriber* class contains methods to subscribe to the Pose
@@ -487,8 +490,25 @@ class Window(QtGui.QWidget):
 
       # For ROV
 
-      lblgui = QtGui.QLabel('Scene selection', self)
-      lblnav = QtGui.QLabel('Navigation Mode', self)
+      lblfix     = QtGui.QLabel('Installation tool', self)
+      lblfixport = QtGui.QLabel('Port', self)
+      lblfixshot = QtGui.QLabel('Trigger', self)
+
+      linefix = QtGui.QFrame() # linea separatoria
+      linefix.setFrameShape(QtGui.QFrame.HLine)
+      linefix.setFrameShadow(QtGui.QFrame.Sunken)
+
+      lblgui     = QtGui.QLabel('Scene selection', self)
+
+      linescene = QtGui.QFrame() # linea separatoria
+      linescene.setFrameShape(QtGui.QFrame.HLine)
+      linescene.setFrameShadow(QtGui.QFrame.Sunken)
+
+      lblnav     = QtGui.QLabel('Navigation Mode', self)
+
+      linenav = QtGui.QFrame() # linea separatoria
+      linenav.setFrameShape(QtGui.QFrame.HLine)
+      linenav.setFrameShadow(QtGui.QFrame.Sunken)
 
       # For PCAS
       lblbaudrate               = QtGui.QLabel('Baudrate')
@@ -528,9 +548,18 @@ class Window(QtGui.QWidget):
 
       # ROV
 
+      combofix = QtGui.QComboBox(self)
+      combofix.setEditable(True)
+
+
+      # connect to funcions
+      combofix.activated[str].connect(self.ComboFix_Port_Activated)
+
       guimode = QtGui.QComboBox(self)
       guimode.addItem("Simulator")
       guimode.addItem("Real ROV")
+
+      guimode.activated[str].connect(self.Comboguimodeactivated)
 
       navmode = QtGui.QComboBox(self)
       navmode.addItem("Teleoperated")
@@ -597,6 +626,7 @@ class Window(QtGui.QWidget):
           comboprofiler_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
           combocollcamera_port_pcas.addItem("/dev/ttyUSB" + str(i))
           combosonaralt_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
+          combofix.addItem(  "/dev/ttyUSB" + str(i))
 
 
       comboalt_pow_channel = QtGui.QComboBox(self)
@@ -668,6 +698,17 @@ class Window(QtGui.QWidget):
       ## BUTTONS ##
 
       # for ROV
+
+      # Buttons for fixing mechanism activation
+      btnfix1 = QtGui.QPushButton('1',self)
+      self.connect(btnfix1, QtCore.SIGNAL("clicked()"),
+                   self.btnfix1_clicked)
+      btnfix2 = QtGui.QPushButton('2',self)
+      self.connect(btnfix2, QtCore.SIGNAL("clicked()"),
+                   self.btnfix2_clicked)
+      btnfix3 = QtGui.QPushButton('3',self)
+      self.connect(btnfix3, QtCore.SIGNAL("clicked()"),
+                   self.btnfix3_clicked)
 
       # Create button and set tooltip
       btnLEFT = QtGui.QPushButton('<', self)
@@ -804,11 +845,14 @@ class Window(QtGui.QWidget):
 
       # Create window with GraphicsView widget
       self.imgwin = pg.GraphicsLayoutWidget()
+
       view = self.imgwin.addViewBox()
       # Create image item
       self.img = pg.ImageItem(border='w')
+      #print self.img.dataTransform()
       view.addItem(self.img)
       self.ic = image_converter()
+      self.imgwin.rotate(90.0)
 
       # For PCAS
       self.imgwinpcas = pg.GraphicsLayoutWidget()
@@ -853,10 +897,19 @@ class Window(QtGui.QWidget):
 
       ## POSITIONING ##
 
+      # create layout with ROV image and collision altimeter text
+      layoutImgStat = QtGui.QVBoxLayout()
+      layoutImgStat.addWidget(self.imgwin)
+      layoutImgStat.addWidget(self.StatusText)
+      # Put it inside a QWidget so it can be added to QSplitter
+      layoutw = QtGui.QWidget()
+      layoutw.setLayout(layoutImgStat)
+
       splitter = QtGui.QSplitter(self)
-      splitter.addWidget(self.imgwin)
+      #splitter.addWidget(self.imgwin)
       splitter.addWidget(self.win)
-      splitter.addWidget(self.StatusText)
+      splitter.addWidget(layoutw)
+      #splitter.addWidget(self.StatusText)
 
       # 3D graphics and Status text vertical between them, form layoutV1
       layoutV1 = QtGui.QVBoxLayout()
@@ -874,12 +927,39 @@ class Window(QtGui.QWidget):
       layoutH1.addLayout(layoutV2)
       layoutH1.addWidget(btnRGT)
 
-      # Add to the buttons label "navigation" vertically
+      # Fixing mechanism labels
+      layoutFix1 = QtGui.QVBoxLayout()
+      layoutFix1.addWidget(lblfixport)
+      layoutFix1.addWidget(lblfixshot)
+
+      # FIXING buttons
+
+      layoutFixBtn = QtGui.QHBoxLayout()
+      layoutFixBtn.addWidget(btnfix1)
+      layoutFixBtn.addWidget(btnfix2) 
+      layoutFixBtn.addWidget(btnfix3) 
+
+      # Fixing combo and buttons
+      layoutFix2 = QtGui.QVBoxLayout()
+      layoutFix2.addWidget(combofix)
+      layoutFix2.addLayout(layoutFixBtn)
+
+      # Fixing elements together
+      layoutFixtot = QtGui.QHBoxLayout()
+      layoutFixtot.addLayout(layoutFix1)
+      layoutFixtot.addLayout(layoutFix2)
+
+      # 4th vertical column: fix/scene sel./ navigation/ joystick
       layoutV3 = QtGui.QVBoxLayout()
+      layoutV3.addWidget(lblfix)
+      layoutV3.addLayout(layoutFixtot)
+      layoutV3.addWidget(linefix)
       layoutV3.addWidget(lblgui)
       layoutV3.addWidget(guimode)
+      layoutV3.addWidget(linescene)
       layoutV3.addWidget(lblnav)
       layoutV3.addWidget(navmode)
+      layoutV3.addWidget(linenav)
 
       # Mode selection with navigation controllers
       layoutV4 = QtGui.QVBoxLayout()
@@ -1129,12 +1209,23 @@ class Window(QtGui.QWidget):
         '''Every time a new image topic arrives, it is updated in the gui widget with this function
         '''
         self.img.setImage(self.ic.cv_image)
+        #cv2.imshow("Image window", self.ic.cv_image)
+        #cv2.waitKey(3)
 
 
     def update_collisioncam_image(self):
         '''Every time a new image topic arrives, it is updated in the gui widget with this function
         '''
         self.collisioncameraimg.setImage(self.collision_ic.cv_image)
+
+    def btnfix1_clicked(self):
+        print 'btn1'
+
+    def btnfix2_clicked(self):
+        print 'btn2'
+
+    def btnfix3_clicked(self):
+        print 'btn3'
 
 
     def btnLEFTpcas_clicked(self):
@@ -1206,6 +1297,15 @@ class Window(QtGui.QWidget):
         thrusters[2] = thrusters[3]= -1
         msg.data = thrusters
         pub.publish(msg)
+
+    def ComboFix_Port_Activated(self, txt):
+        print txt
+
+    def Comboguimodeactivated(self, modetxt):
+        if modetxt == 'Real ROV':
+            self.ic.subscribe(self.ic.newcameraimage,"/BlueRov2/camera/image_raw")
+        else:
+            self.ic.subscribe(self.ic.newcameraimage,"/uwsim/camera1")
 
     def ComboBaudActivated(self, baudtxt):
         """

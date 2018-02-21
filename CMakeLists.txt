@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   uwsim
   laser_geometry
   pcl_ros
-  PCL REQUIRED
+
   rqt_gui
   rqt_gui_py
   tritech_profiler
@@ -127,9 +127,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 include_directories(include/stams_gui)
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+
 
 ## Declare a C++ library
 # add_library(stams_gui
@@ -202,10 +200,9 @@ add_definitions(${PCL_DEFINITIONS})
 # catkin_add_nosetests(test)
 
 add_executable(LasertoPC src/LasertoPC.cpp)
-add_executable(PCVisualizer src/PCL_visualizer.cpp)
+
 
 target_link_libraries(LasertoPC ${catkin_LIBRARIES})
 
-target_link_libraries (PCVisualizer ${PCL_LIBRARIES})
 
 
