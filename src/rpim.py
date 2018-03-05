@@ -1360,6 +1360,14 @@ class Window(QtGui.QWidget):
         Here the value saved in the SDS_Params class for the Power supply channel of the Profiling sonar is updated."""
         self.SDS_params.profiler_data_channel = text
 
+        profiler_params = {'profiler_port': self.SDS_params.profiler_data_channel}
+
+        try:
+            config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
+        except:
+            rospy.logwarn("Could not update profiler params. Are you sure Profiler is connected?")
+
+
     def ComboCam_Pow_Activated(self,text):
         """This funcion is called when the Profiling Sonar combo box for selection of Power Supply Channel is activated.
         Here the value saved in the SDS_Params class for the Power supply channel of the Profiling sonar is updated."""
