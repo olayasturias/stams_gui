@@ -1320,13 +1320,28 @@ class Window(QtGui.QWidget):
         :param baudtxt: the baudrate passed to a string value
         :return:
         """
-
+        # Send commands to Serial Data Switch
         self.SDS_params.previous_baudrate = self.SDS_params.baudrate
         self.SDS_params.baudrate = int(baudtxt)
 
         self.SDS_params.parse_params()
 
         self.SDS_params.change_baudrate()
+
+        # Reconfigure profiler and altimeter drivers
+        profiler_params = {'profiler_port_baudrate': int(baudtxt)}
+        altimeter_params = {'altimeter_port_baudrate': int(baudtxt)}       
+        
+        
+        try:
+            config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
+        except:
+            rospy.logwarn("Could not update profiler params. Are you sure Profiler is connected?")
+
+        try:
+            config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
+        except:
+            rospy.logwarn("Could not update Altimeter params. Are you sure Altimeter is connected?")
 
 
     def ComboProfiler_Port_Activated(self,text):
