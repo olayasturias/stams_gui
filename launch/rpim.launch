@@ -24,7 +24,7 @@
   <!-- Launch Valeport Altimeter -->
   <node name="valeport_altimeter"
         pkg="valeport_altimeter"
-        type="altimeter.py"
+        type="dynamic_altimeter.py"
         output="screen"
         respawn="true">
   </node>

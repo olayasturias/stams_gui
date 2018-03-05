@@ -1428,16 +1428,23 @@ class Window(QtGui.QWidget):
             self.cb_alt_data.setChecked(False)
             self.SDS_params.parse_params()
             self.SDS_params.send(self.SDS_params.profiler_channel, self.SDS_params.profiler_data_message)
+            altimeter_params = {'altimeter_port_enabled': str(0)}
         else:
             self.SDS_params.profiler_data_enabled = 0
 
         profiler_params = {'port_enabled': str(self.SDS_params.profiler_data_enabled)}
+        
         print profiler_params
         
         try:
             config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
         except:
-            rospy.logwarn("Tritech node not running. Could not update params. Are you sure Profiler is connected?")
+            rospy.logwarn("Could not update profiler params. Are you sure Profiler is connected?")
+
+        try:
+            config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
+        except:
+            rospy.logwarn("Could not update Altimeter params. Are you sure Altimeter is connected?")
 
 
 
@@ -1447,15 +1454,22 @@ class Window(QtGui.QWidget):
             self.cb_profiler_data.setChecked(False)
             self.SDS_params.parse_params()
             self.SDS_params.send(self.SDS_params.altimeter_channel, self.SDS_params.altimeter_data_message)
+            profiler_params = {'port_enabled': str(0)}
         else:
             self.SDS_params.altimeter_data_enabled = 0
 
         altimeter_params = {'altimeter_port_enabled': str(self.SDS_params.altimeter_data_enabled)}
 
+
         try:
             config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
         except:
-            rospy.logwarn("Valeport node not running. Could not update params. Are you sure Altimeter is connected?")
+            rospy.logwarn("Could not update altimeter params. Are you sure Altimeter is connected?")
+
+        try:
+            config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
+        except:
+            rospy.logwarn("Could not update params. Are you sure Profiler is connected?")
             
 
 
