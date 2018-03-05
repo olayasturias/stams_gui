@@ -53,6 +53,8 @@ class ParameterServer_Params(QThread):
 
     .. data:: profiler_client
 
+    .. data:: valeport_altimeter_client
+
     the client of the elements for the dynamic configuration of the Tritech Profiler's
     parameters.
 
@@ -60,7 +62,7 @@ class ParameterServer_Params(QThread):
     def __init__(self):
         QtCore.QThread.__init__(self)
         self.profiler_client = None
-        self.valeport_altimeter = None
+        self.valeport_altimeter_client = None
         self.bowtech_camera = None
 
     def run(self):
@@ -68,7 +70,9 @@ class ParameterServer_Params(QThread):
         The run method is a overun method of the QThread class, and starts when required in a separate thread.
 
         """
+        self.valeport_altimeter_client = dynamic_reconfigure.client.Client("/valeport_altimeter")
         self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
+        
 
 
 
@@ -1105,6 +1109,8 @@ class Window(QtGui.QWidget):
       self.show()
 
       ## PARAMETER SERVER ##
+      self.ProfilerParam = ParameterServer_Params()
+      self.ProfilerParam.start()
       #self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
 
     def update_PS_PointCloud(self):
@@ -1425,14 +1431,11 @@ class Window(QtGui.QWidget):
         else:
             self.SDS_params.profiler_data_enabled = 0
 
-        ProfilerParam = ParameterServer_Params()
-
         profiler_params = {'port_enabled': str(self.SDS_params.profiler_data_enabled)}
         print profiler_params
-        ProfilerParam.start()
-
+        
         try:
-            config = ProfilerParam.profiler_client.update_configuration(profiler_params)
+            config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
         except:
             rospy.logwarn("Tritech node not running. Could not update params. Are you sure Profiler is connected?")
 
@@ -1446,6 +1449,14 @@ class Window(QtGui.QWidget):
             self.SDS_params.send(self.SDS_params.altimeter_channel, self.SDS_params.altimeter_data_message)
         else:
             self.SDS_params.altimeter_data_enabled = 0
+
+        altimeter_params = {'altimeter_port_enabled': str(self.SDS_params.altimeter_data_enabled)}
+
+        try:
+            config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
+        except:
+            rospy.logwarn("Valeport node not running. Could not update params. Are you sure Altimeter is connected?")
+            
 
 
 

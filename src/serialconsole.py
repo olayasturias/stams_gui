@@ -187,20 +187,28 @@ class Window(QtGui.QWidget):
 
     def OpenClosePort(self):
 
+        openport = False
+
         try:
             openport = self.serconn.is_open
         except:
             try:
                 self.serconn = serial.Serial(self.port,self.baudrate)
+                openport = self.serconn.is_open
             except:
                 self.lblst.setText('could not open port. Device connected?')
-            openport = self.serconn.is_open
+            
 
         if openport:
             self.serconn.close()
 
         else:
-            self.serconn.open()
+            try:
+                self.serconn.open()
+            except:
+                self.serconn = serial.Serial(self.port,self.baudrate)
+                openport = self.serconn.is_open
+                self.serconn.open()
 
 
         if self.serconn.is_open:
