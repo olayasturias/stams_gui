@@ -14,17 +14,18 @@ git clone https://github.com/olayasturias/stams_gui
 
 ## Dependencies
 
-Before proceeding, make sure to install all the dependencies by running:
+This package depends on `tritech_profiler` and `valeport_altimeter`, from my repository. In order to install it, in your catkin workspace, do:
+
+```bash
+git clone https://github.com/olayasturias/tritech_profiler
+git clone https://github.com/olayasturias/valeport_altimeter
+```
+
+The rest of the dependencies can be installed by running:
 
 ```bash
 rosdep update
 rosdep install stams_gui
-```
-
-Another dependency is `tritech_profiler`, from my repository. In order to install it, in your catkin workspace, do:
-
-```bash
-git clone https://github.com/olayasturias/tritech_profiler
 ```
 
 ## Compiling
