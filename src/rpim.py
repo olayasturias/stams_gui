@@ -869,26 +869,6 @@ class Window(QtGui.QWidget):
 
       ## 3D GRAPICS ##
 
-      # For pose displaying
-
-      self.ps = pose_subscriber()
-      self.win = gl.GLViewWidget()
-      # Add a grid to the view
-      g = gl.GLGridItem()
-      g.setDepthValue(10)  # draw grid after surfaces since they may be translucent
-      self.win.addItem(g)
-      # Add Scatter Plot to widget
-      real_pose = np.zeros((1,1,3))
-      poseplot = gl.GLScatterPlotItem(pos=real_pose,color=(1,1,1,1),size=0.1)
-      self.win.addItem(poseplot)
-
-      # For PointCloud from PCAS displaying
-
-      # Here I use my class because I wanted to use the mouseclick callback in this widget
-      self.pcas = MyGLView()
-      self.pcas.addItem(g)
-      pointplot = gl.GLScatterPlotItem(pos=real_pose, color=(1, 1, 1, 1), size=0.1)
-      self.pcas.addItem(pointplot)
 
       # For sonar altimeter
       self.altimeter = altimeter_subscriber()
@@ -910,8 +890,6 @@ class Window(QtGui.QWidget):
       layoutw.setLayout(layoutImgStat)
 
       splitter = QtGui.QSplitter(self)
-      #splitter.addWidget(self.imgwin)
-      splitter.addWidget(self.win)
       splitter.addWidget(layoutw)
       #splitter.addWidget(self.StatusText)
 
@@ -978,7 +956,6 @@ class Window(QtGui.QWidget):
       # Layout of PCAS tab
 
       splitterpcas = QtGui.QSplitter(self)
-      splitterpcas.addWidget(self.pcas)
       splitterpcas.addWidget(self.imgwinpcas)
       splitterpcas.addWidget(self.StatusText2)
 
@@ -1082,7 +1059,6 @@ class Window(QtGui.QWidget):
 
       # Create signal for the Plain text, connect to update_string function
       #self.ps.newstring.connect(self.update_string)
-      self.ps.newscatter.connect(self.update_pose_plot)
       # Signal for the new image received
       # for ROV
       self.ic.newcameraimage.connect(self.update_ROV_image)
@@ -1099,7 +1075,6 @@ class Window(QtGui.QWidget):
       ## TOPIC SUBSCRIBERS ##
 
       # Subscribe to pose message that needs to be displayed
-      self.ps.subscribe(self.ps.newstring,self.ps.newscatter)
       self.altimeter.subscribe(self.altimeter.newsonarrange)
       self.ic.subscribe(self.ic.newcameraimage,"/uwsim/camera1")
       self.collision_ic.subscribe(self.collision_ic.newcameraimage,"/v4l/bowtech_camera/image_raw")

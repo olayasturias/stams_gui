@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
-  uwsim
   laser_geometry
   pcl_ros
 
