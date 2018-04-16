@@ -141,37 +141,6 @@ class SDS_Params():
         print self.baudrate_message
         ser.close()
 
-class MyGLView(gl.GLViewWidget):
-    """ *MyGLView* class inherits from GLViewWidget class, and overwrites the *paintGL* and *mousePresEvent* methods
-    to provide personalised capabilities.
-    This class provides the same capabilities than GLViewWidget, but additionally it allows to add text in the 3D
-    plot and calls a callback fuction every time the mouse clicks on the widget.
-    """
-    def paintGL(self, *args, **kwds):
-        """
-        *paintGL* method draws over the widget every time it is refreshed. Here the original class is overwriten in order
-        to render text over it
-        :param args: receives a GLViewWidget object
-        :param kwds: receives a GLViewWidget object called "region", it is the area we are writting on.
-        :return:
-        """
-        gl.GLViewWidget.paintGL(self, *args, **kwds)
-        self.qglColor(QtCore.Qt.white)
-        self.renderText(0, 0, 0, 'origin')
-
-
-    def mousePressEvent(self,ev):
-        """
-        *mousePressEvent* method overwrites the function from the parent class. This method is called every time
-        the mouse is clicked on the associated widget.
-        :param ev: the event that executes this class.
-        :return:
-        """
-        self.mousePos = ev.pos()
-        print "pressed button HERE",ev.button(),"at", ev.pos()
-
-
-
 class image_converter(QObject):
   """ The *image_converter* class contains methods to subscribe to an image
   topic, convert it from sensor_msgs to cv image, and emit a signal to update
@@ -219,62 +188,6 @@ class image_converter(QObject):
       except CvBridgeError as e:
         print(e)
 
-
-class pose_subscriber(QObject):
-    """ The *pose_subscriber* class contains methods to subscribe to the Pose
-    topic , read the messages and save them in a float variable and in a
-    string variable.
-
-    **Attributes**:
-
-        .. data:: newstring
-
-            Signal used for drawing a new string read from topic in a PlainText
-
-        .. data:: newscatter
-
-            Signal used for drawing a new pose point in a 3D scatter plot
-
-        .. data:: pose_world_frame
-
-            float variable which stores the x,y,z coordinates of the robot pose
-
-        .. data:: datastring
-
-            string variable which stores the x coordinate of the robot pose
-
-        .. data:: datainput
-
-        this variables is used for writing or drawing a new pose message only
-        when it differs from the previous one
-
-        """
-
-    newstring = pyqtSignal()
-    newscatter = pyqtSignal()
-
-    def subscribe(self,signal1,signal2):
-        """ Subscribes to a pose topic
-        """
-        self.datainput = [0,0]
-        rospy.Subscriber("/g500/pose", Pose, self.pose_callback, (signal1,signal2))
-
-    def pose_callback(self,data,(signal1,signal2)):
-        """ Reads data from pose topic and emits the signals related with this message
-        """
-        # Read data from topic
-        self.pose_world_frame = [data.position.x, data.position.y, data.position.z]
-        self.datainput[0] = round(self.pose_world_frame[2],2)
-
-        # Emit signal to update string when new data is received from the topic
-        # and only if the value has changed
-        if (self.datainput[0] != self.datainput[1]):
-          self.datainput[1] = self.datainput[0]
-          # format data to be displayed to string
-          self.datastring = "{:.2f}".format(self.pose_world_frame[2])
-          # Emit signal
-          signal1.emit()
-          signal2.emit()
 
 class altimeter_subscriber(QObject):
     """
@@ -345,48 +258,6 @@ class Joystick_thread(QThread):
           # emit joystick signal each 0.1 secs
           self.emit(self.signal, "joystick thread")
           self.mutex.unlock()
-
-class ProfilingSonar_PC(QThread):
-    """ *ProfilingSonar_PC* executes a thread where the point cloud
-    from the Profiling Sonar sensor is read, and the signal is emitted to
-    refresh the GUI.
-
-    **Atributes**:
-
-    .. data:: newpcsignal
-
-    Signal that is emitted when the profiling sonar callback is called, i.e., everytime a new message from the
-    Profiling Sonar topic arrives.
-
-    """
-    def __init__(self):
-        ''' Initialize the Point Cloud drawing thread.'''
-        QtCore.QThread.__init__(self)
-        self.newpcsignal = QtCore.SIGNAL("PSsignal")
-
-        rospy.Subscriber("/tritech_profiler/scan",PointCloud,self.PS_callback)
-    #
-    # def run(self):
-    #     ''' This function is executed every ___ seconds, and the pointcloud plot signal
-    #     is emitted'''
-    #     while 1:
-    #         time.sleep(1)
-    #
-    #         self.PSCloud = V4LOG_to_py('PS.CSV')
-    #         self.PSCloud.generate_useful_data_header()
-    #         self.PSCloud.read_useful_csv('PS.CSV')
-    #         self.PSCloud.convert_cylindrical_cartesian()
-    #
-    #         self.emit(self.newpcsignal,"profilingsonar PC thread")
-    def PS_callback(self,data):
-        """ Callback function associated to the Point Cloud from the Profiling Sonar. Each time a new message arrives
-        (that is, a new point cloud), the code enters in this function and a signal is emitted.
-        This signal updates the Point Cloud viewer of the User Interface.
-
-        """
-        self.profiler_PC = data
-        self.emit(self.newpcsignal,"profilingsonar PC thread")
-
 
 class Window(QtGui.QWidget):
     """ *Window* class inherits from QtGui.QWidget class.
@@ -1067,11 +938,6 @@ class Window(QtGui.QWidget):
       # For altimeter
       self.altimeter.newsonarrange.connect(self.update_string)
 
-      # Profiling Sonar PointCloud
-      self.PS_PC = ProfilingSonar_PC()
-      self.connect(self.PS_PC, self.PS_PC.newpcsignal, self.update_PS_PointCloud)
-      self.PS_PC.start()
-
       ## TOPIC SUBSCRIBERS ##
 
       # Subscribe to pose message that needs to be displayed
@@ -1087,67 +953,7 @@ class Window(QtGui.QWidget):
       self.ProfilerParam = ParameterServer_Params()
       self.ProfilerParam.start()
       #self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
-
-    def update_PS_PointCloud(self):
-        """ This function updates the point cloud every time the signal is emitted from the
-        *PointCloud_PC* thread. The point cloud showed is the result from the Profiling Sonar Scanning.
-        **Attributes**:
-
-        .. data: verts
-        The points read from the script that converts the data from the sensor to a scatter to be read from this GUI
-
-        .. data: color
-        The color associated to each point from the scatter. The color varies with the Z coordinate
-
-        .. data: color_normed
-        The normalised matrix for the color of each point: the values must be between 0 and 1
-
-        .. data: scatt_prof
-        the GLScatterPlotItem which contains the point cloud with the new mesaruements read
-
-        .. data: scatt_plot_label
-        A GLScatterPLotItem which is used to show text in the widget.
-        """
-
-        # z = self.PS_PC.PSCloud.cylindric_cartesian['Z']
-        # x = self.PS_PC.PSCloud.cylindric_cartesian['X']
-        # y = self.PS_PC.PSCloud.cylindric_cartesian['Y']
-        #
-        #
-        # # Normalize values (to create the color palette)
-        # z_norm = z/z.max()
-        # # Extract the sensor values to be drawn
-        # verts = np.empty((len(x), 3), dtype=np.float64)
-        # verts[:,0] = x
-        # verts[:,1] = y
-        # verts[:,2] = z*20
-        # # Create the color palette
-        # color = np.ones((len(x),4))
-        # color[:,0] = 6.25*z_norm*z_norm*z_norm-9.375*z_norm*z_norm+2.125*z_norm+1
-        # color[:,1] = 4.17*z_norm*z_norm*z_norm-6.25*z_norm*z_norm+3.1*z_norm
-        # color[:,2] = 4.17*z_norm*z_norm*z_norm-6.25*z_norm*z_norm+3.1*z_norm
-        # #color[:,3] = 4.17*z_norm*z_norm*z_norm-6.25*z_norm*z_norm+3.1*z_norm
-        #
-        # color_normed = color/color.max(axis = 0)
-        #
-        # # Draw the scatter plot
-        # self.scatt_prof = gl.GLScatterPlotItem(pos=verts,color=color_normed,size=5)
-        # self.scatt_prof.setGLOptions('translucent')
-        # self.pcas.addItem(self.scatt_prof)
-        #
-        # # Add label with mouse cursor values
-        # self.scatt_plot_label = MyGLView(self.pcas)
-        # self.scatt_plot_label.paintGL(region=self.pcas.getViewport())
-
-        verts = np.array([[0,0,0]])
-        for point in self.PS_PC.profiler_PC.points:
-            verts = np.vstack((verts, [point.x,point.y,point.z]))
-
-        color = np.ones((len(verts), 4))
-
-        self.scatt_prof = gl.GLScatterPlotItem(pos=verts,color=color,size=5)
-        self.scatt_prof.setGLOptions('translucent')
-        self.pcas.addItem(self.scatt_prof)
+      self.showNormal()
 
     def joystick_changed(self):
         """ This function unlocs the joystick thread, allowing it to update the
@@ -1177,14 +983,6 @@ class Window(QtGui.QWidget):
         self.StatusText.appendPlainText('obstacle =' + self.altimeter.datastring)
         self.StatusText2.appendPlainText('obstacle =' + self.altimeter.datastring)
 
-    def update_pose_plot(self):
-        ''' This function updates the pose of the ROV and adds it to its trajectory in the
-        3D scatter plot of the GUI
-        '''
-        pos3 = np.zeros((1,1,3))
-        pos3[0,0,:] = self.ps.pose_world_frame
-        poseplot = gl.GLScatterPlotItem(pos=pos3,color=(1,1,1,1))
-        self.win.addItem(poseplot)
 
     def update_ROV_image(self):
         '''Every time a new image topic arrives, it is updated in the gui widget with this function
