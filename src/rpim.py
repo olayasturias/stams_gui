@@ -8,6 +8,8 @@ import sys
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import QObject, pyqtSignal, QRunnable, QThread,QThreadPool
 from PyQt4.Qt import QObject, QMutex, QApplication, QThread, QMutexLocker, QEvent,QMouseEvent
+import pyqtgraph as pg
+import pyqtgraph.opengl as gl
 
 import numpy as np
 import scipy.ndimage as ndi
