@@ -44,6 +44,10 @@
   </node>
 
 
+        <!-- Launch Bluerov ROS node -->
+  <include file="$(find bluerov_ros_playground)/launch/user_mav.launch"/>
+
+
 
   <!-- The GStreamer framerate needs to be an integral fraction -->
   <arg name="FPS" default="30/1"/>

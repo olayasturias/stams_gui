@@ -4,8 +4,6 @@
 import time
 import rospy
 import sys
-sys.path.append("/home/olaya/V4LOG_to_point_cloud")
-from v4log_to_scatter import V4LOG_to_py
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import QObject, pyqtSignal, QRunnable, QThread,QThreadPool
@@ -1082,7 +1080,7 @@ class Window(QtGui.QWidget):
 
     def Comboguimodeactivated(self, modetxt):
         if modetxt == 'Real ROV':
-            self.ic.subscribe(self.ic.newcameraimage,"/BlueRov2/camera/image_raw")
+            self.ic.subscribe(self.ic.newcameraimage,"/BlueRov2/image")
         else:
             self.ic.subscribe(self.ic.newcameraimage,"/uwsim/camera1")
 
