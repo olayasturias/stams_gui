@@ -31,7 +31,9 @@ from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import imutils
 
-#import pcl
+# For winch depth info
+from depthstamp import DepthInfo
+from Socket import Socket
 
 """
 .. codeauthor:: Olaya Alvarez Tunon
@@ -256,6 +258,22 @@ class Joystick_thread(QThread):
           # emit joystick signal each 0.1 secs
           self.emit(self.signal, "joystick thread")
           self.mutex.unlock()
+
+
+class DepthReader(QThread):
+    """
+    This method calls the class *DepthReader*, which reads the serial port
+    of the winch enconder to publish the PCAS depth
+    """
+    def __init__(self, port='/dev/ttyUSB0',baudrate = 115200):
+        QtCore.QThread.__init__(self)
+        self.winchinfo = DepthInfo(port,baudrate)
+
+    def run(self):
+        # This function opens the serial port of the winch encoder and reads it
+        # until shutdown
+        self.winchinfo.open()
+     
 
 class Window(QtGui.QWidget):
     """ *Window* class inherits from QtGui.QWidget class.
@@ -952,6 +970,9 @@ class Window(QtGui.QWidget):
       self.ProfilerParam.start()
       #self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
       self.showNormal()
+
+      self.winchreader = DepthReader()
+      self.winchreader.start()
 
     def joystick_changed(self):
         """ This function unlocs the joystick thread, allowing it to update the

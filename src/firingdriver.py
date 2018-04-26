@@ -1,20 +1,14 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import time
 import rospy
-import sys
+import serial
 import bitstring
 import binascii
 import select
 import datetime
 from sensor_msgs.msg import Range
 from Socket import Socket
-import serial
-import geometry_msgs.msg
-import tf
-import tf2_ros
-from PyQt4.Qt import QObject
 
 
 class SonarNotFound(Exception):
@@ -31,9 +25,9 @@ class TimeoutError(Exception):
 
 
 
-class DepthInfo(QObject):
+class Firing_Sys(object):
     """
-    *DepthInfo* class for firing system driver
+    *Firing_Sys* class for firing system driver
     """
     def __init__(self, port="/dev/ttyUSB0", baudrate = 115200):
         """
@@ -48,13 +42,9 @@ class DepthInfo(QObject):
         self.initialized = False
         self.configured = False
 
-        # Create TransformStamped message
-        self.transf = geometry_msgs.msg.TransformStamped()
-        self.transf.header.frame_id = 'world'
-        self.transf.child_frame_id = 'sonar'
-        self.tfbroad = tf2_ros.TransformBroadcaster()
-
-
+        self.range = 0
+        self.max_range = 0
+        self.min_range = 0
 
     def __enter__(self):
         """
@@ -72,22 +62,21 @@ class DepthInfo(QObject):
         :return:
         """
         self.close()
-        rospy.loginfo("Closed depth reader on %s", self.port)
+        rospy.loginfo("Closed firing mechanism on %s", self.port)
 
     def open(self):
         """
-        Initializes connection
+        Initializes sonar connection
         :return:
         """
         # Initialize the port
         if not self.conn:
             try:
-                self.conn = Socket(port = self.port, baudrate = self.baudrate)
-                self.conn.conn.open()
+                self.conn = Socket(self.port, self.baudrate)
             except OSError as e:
                 raise SonarNotFound(self.port,e)
 
-        rospy.loginfo("Initializing connection with depth board on %s", self.port)
+        rospy.loginfo("Initializing connection with firing mechanism on %s", self.port)
         self.initialized = True
         self.read()
 
@@ -122,11 +111,8 @@ class DepthInfo(QObject):
 
             # Get the scan data
             try:
-                data = self.get(wait = 1)
-                print data
-                self.transf.header.stamp = rospy.Time.now()
-                self.transf.transform.translation.z = data
-                self.tfbroad.sendTransform(self.transf)
+                data = self.get('AFS',wait = 1).payload
+                self.range = float(data)
                 timeout_count = 0
             except TimeoutError:
                 timeout_count += 1
@@ -137,7 +123,7 @@ class DepthInfo(QObject):
                 continue
 
 
-    def get(self, wait = 2):
+    def get(self, message = None, wait = 2):
         """
         Sends command and returns reply
         :param message: Message to expect
@@ -148,7 +134,7 @@ class DepthInfo(QObject):
         if not self.initialized:
             raise SonarNotConfigured
 
-        rospy.logdebug("Waiting for depth message")
+        rospy.logdebug("Waiting for limit switches state message")
 
         # Determine end time
         end = datetime.datetime.now() + datetime.timedelta(seconds=wait)
@@ -156,16 +142,13 @@ class DepthInfo(QObject):
         # Wait until received 
         while  datetime.datetime.now() < end:
             try:
-                reply = self.conn.conn.read(4)
-
-                inhex = int(reply.encode('hex'), 32)             
-                
-                return inhex
+                reply = self.conn.get_reply(expected_reply = message, enabled = True)
+                return reply
             except:
                 break
 
         # Timeout
-        rospy.logerr("Timed out before receiving depth message")
+        rospy.logerr("Timed out before receiving limit switches message")
         raise TimeoutError()
 
     def preempt(self):
@@ -173,16 +156,16 @@ class DepthInfo(QObject):
         Preempts the process
         :return:
         """
-        rospy.logwarn("Preempting depth reader process...")
+        rospy.logwarn("Preempting fixing process...")
         self.preempted = True
 
 
 if __name__ == "__main__":
     # Initialize node
-    rospy.init_node('depth_driver', log_level=rospy.DEBUG)
+    rospy.init_node('firing_driver', log_level=rospy.DEBUG)
 
     port = '/dev/ttyUSB0'
-    baudrate = 38400
+    baudrate = 115200
 
-    with DepthInfo(port,baudrate) as firing_system:
+    with Firing_Sys(port,baudrate) as firing_system:
         pass
