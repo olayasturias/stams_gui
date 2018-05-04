@@ -52,6 +52,14 @@ class DepthInfo(QObject):
         self.transf = geometry_msgs.msg.TransformStamped()
         self.transf.header.frame_id = 'world'
         self.transf.child_frame_id = 'sonar'
+        # Initialize values to publish
+        self.transf.transform.translation.x = 0 
+        self.transf.transform.translation.y = 0
+        self.transf.transform.translation.z = 0
+        self.transf.transform.rotation.x = 0.0
+        self.transf.transform.rotation.y = 0.0
+        self.transf.transform.rotation.z = 0.0
+        self.transf.transform.rotation.w = 1.0
         self.tfbroad = tf2_ros.TransformBroadcaster()
 
 
@@ -123,7 +131,6 @@ class DepthInfo(QObject):
             # Get the scan data
             try:
                 data = self.get(wait = 1)
-                print data
                 self.transf.header.stamp = rospy.Time.now()
                 self.transf.transform.translation.z = data
                 self.tfbroad.sendTransform(self.transf)
@@ -158,7 +165,7 @@ class DepthInfo(QObject):
             try:
                 reply = self.conn.conn.read(4)
 
-                inhex = int(reply.encode('hex'), 32)             
+                inhex = int(reply.encode('hex'), 32)       
                 
                 return inhex
             except:

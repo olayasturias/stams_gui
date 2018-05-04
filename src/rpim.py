@@ -33,7 +33,8 @@ import imutils
 
 # For winch depth info
 from depthstamp import DepthInfo
-from Socket import Socket
+import tf2_ros
+import tf
 
 """
 .. codeauthor:: Olaya Alvarez Tunon
@@ -260,20 +261,28 @@ class Joystick_thread(QThread):
           self.mutex.unlock()
 
 
-class DepthReader(QThread):
+class DepthSubscriber(QThread):
     """
-    This method calls the class *DepthReader*, which reads the serial port
+    This method calls the class *DepthSubscriber*, which reads the serial port
     of the winch enconder to publish the PCAS depth
     """
-    def __init__(self, port='/dev/ttyUSB0',baudrate = 115200):
+    def __init__(self):
         QtCore.QThread.__init__(self)
-        self.winchinfo = DepthInfo(port,baudrate)
+        self.tflistener = tf.TransformListener()
+        self.signal = QtCore.SIGNAL("depth signal")
 
     def run(self):
         # This function opens the serial port of the winch encoder and reads it
         # until shutdown
-        self.winchinfo.open()
-     
+        while not rospy.is_shutdown():
+            try:
+                (trans,rot) = self.tflistener.lookupTransform('/world', '/sonar', rospy.Time(0))
+                self.wdepth = str(trans[2])
+                self.emit(self.signal, "winch thread")
+                rospy.sleep(0.5)
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                continue
+
 
 class Window(QtGui.QWidget):
     """ *Window* class inherits from QtGui.QWidget class.
@@ -402,6 +411,9 @@ class Window(QtGui.QWidget):
       linenav.setFrameShadow(QtGui.QFrame.Sunken)
 
       # For PCAS
+      lbldepth = QtGui.QLabel('Depth')
+      lblobstacle = QtGui.QLabel('Distance to obstacle')
+
       lblbaudrate               = QtGui.QLabel('Baudrate')
 
       linebr = QtGui.QFrame() # linea separatoria
@@ -434,6 +446,13 @@ class Window(QtGui.QWidget):
       linesonbut = QtGui.QFrame() # linea separatoria
       linesonbut.setFrameShape(QtGui.QFrame.HLine)
       linesonbut.setFrameShadow(QtGui.QFrame.Sunken)
+
+      lblwinchdepth      = QtGui.QLabel('Winch Depth Info', self)
+      lblwinchdepth_port = QtGui.QLabel('Port', self)
+
+      linewinchdepth = QtGui.QFrame() # linea separatoria
+      linewinchdepth.setFrameShape(QtGui.QFrame.HLine)
+      linewinchdepth.setFrameShadow(QtGui.QFrame.Sunken)
 
       ## COMBO BOX ##
 
@@ -512,12 +531,17 @@ class Window(QtGui.QWidget):
       combosonaralt_port_pcas = QtGui.QComboBox(self)
       combosonaralt_port_pcas.setEditable(True)
 
+      # For winch depth board
+      combowinchdepth = QtGui.QComboBox(self)
+      combowinchdepth.setEditable(True)
+
       # Add labels to combo box options
       for i in range (0, 4):
           comboprofiler_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
           combocollcamera_port_pcas.addItem("/dev/ttyUSB" + str(i))
           combosonaralt_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
           combofix.addItem(  "/dev/ttyUSB" + str(i))
+          combowinchdepth.addItem("/dev/ttyUSB" + str(i))
 
 
       comboalt_pow_channel = QtGui.QComboBox(self)
@@ -528,6 +552,7 @@ class Window(QtGui.QWidget):
       # connect to funcions
       combosonaralt_port_pcas.activated[str].connect(self.ComboAltimeter_Port_Activated)
       comboalt_pow_channel.activated[str].connect(self.ComboAltimeter_Pow_Activated)
+      combowinchdepth.activated[str].connect(self.ComboWinch_Port_Activated)
 
       comboalt_data_channel = QtGui.QComboBox(self)
       comboalt_data_channel.addItem("1")
@@ -707,7 +732,7 @@ class Window(QtGui.QWidget):
       btnSTOPpcas.setAutoRepeat(True)
 
       btnSTOPpcas.setStyleSheet('QPushButton {background-color: #E20202; color: white;}')
-      btnSTOPpcas.setFixedSize(220,110)
+      btnSTOPpcas.setFixedSize(110,50)
       btnSTOPpcas.font().setBold(0)
 
 
@@ -726,11 +751,19 @@ class Window(QtGui.QWidget):
 
       # For PCAS tab
 
+      # Collition avoidance text
       self.StatusText2 = QtGui.QPlainTextEdit("Waiting for first message")
       # With this, the user wont be able to edit plain text
       self.StatusText2.setReadOnly(1)
       # Scroll automatically to the bottom of the text
       self.StatusText2.centerCursor()
+      #Depth text
+      self.DepthText = QtGui.QPlainTextEdit("Waiting for first message")
+      # With this, the user wont be able to edit plain text
+      self.DepthText.setReadOnly(1)
+      # Scroll automatically to the bottom of the text
+      self.DepthText.centerCursor()
+      self.DepthText.setFixedHeight(30)
 
       ## IMAGE VIEW ##
 
@@ -842,21 +875,34 @@ class Window(QtGui.QWidget):
 
       # Layout of PCAS tab
 
-      splitterpcas = QtGui.QSplitter(self)
-      splitterpcas.addWidget(self.imgwinpcas)
-      splitterpcas.addWidget(self.StatusText2)
+      # winch nav buttons
 
       # BtnUP and btnDOWN vertical between them (with joystick), form layoutV2
       layout1V1 = QtGui.QVBoxLayout()
       layout1V1.addWidget(btnUPpcas)
       layout1V1.addWidget(btnSTOPpcas)
       layout1V1.addWidget(btnDOWNpcas)
-
-      #BtnRIGHT, layoutV2 and btnLEFT placed horizontally, form LayoutH1
+      # BtnRIGHT, layoutV2 and btnLEFT placed horizontally, form LayoutH1
       layout1H1 = QtGui.QHBoxLayout()
       layout1H1.addWidget(btnLEFTpcas)
       layout1H1.addLayout(layout1V1)
       layout1H1.addWidget(btnRGTpcas)
+
+      layout2 = QtGui.QVBoxLayout()
+      layout2.addWidget(lblobstacle)
+      layout2.addWidget(self.StatusText2)
+      layout2.addWidget(lbldepth)
+      layout2.addWidget(self.DepthText)
+      layout2.addWidget(linesonbut)
+      layout2.addWidget(lblnavpcas)
+      layout2.addLayout(layout1H1)
+      # Put it inside a QWidget so it can be added to QSplitter
+      layoutw2 = QtGui.QWidget()
+      layoutw2.setLayout(layout2)
+
+      splitterpcas = QtGui.QSplitter(self)
+      splitterpcas.addWidget(self.imgwinpcas)
+      splitterpcas.addWidget(layoutw2)
 
       # Grouping sensor labels with their combo boxes
 
@@ -896,6 +942,10 @@ class Window(QtGui.QWidget):
       layout1Hport_sonaralt3.addWidget(lblalt_data_channel)
       layout1Hport_sonaralt3.addWidget(comboalt_data_channel)
 
+      layoutwinch_port = QtGui.QHBoxLayout()
+      layoutwinch_port.addWidget(lblwinchdepth_port)
+      layoutwinch_port.addWidget(combowinchdepth)
+
 
       #label vertical, with nav buttons and combo boxes
       layout1V2 = QtGui.QVBoxLayout()
@@ -919,9 +969,9 @@ class Window(QtGui.QWidget):
       layout1V2.addLayout(layout1Hport_sonaralt3)
       layout1V2.addWidget(self.cb_alt_power)
       layout1V2.addWidget(self.cb_alt_data)
-      layout1V2.addWidget(linesonbut)
-      layout1V2.addWidget(lblnavpcas)
-      layout1V2.addLayout(layout1H1)
+      layout1V2.addWidget(linewinchdepth)
+      layout1V2.addWidget(lblwinchdepth)
+      layout1V2.addLayout(layoutwinch_port)
 
       # buttons + scatter widget
       layout1H2 = QtGui.QHBoxLayout(tab2)
@@ -942,6 +992,15 @@ class Window(QtGui.QWidget):
       self.setWindowTitle('Reference Points Installation Module')
       self.setWindowIcon(QtGui.QIcon('stams.png'))
 
+      ## TOPIC SUBSCRIBERS ##
+
+      # Subscribe to pose message that needs to be displayed
+      self.altimeter.subscribe(self.altimeter.newsonarrange)
+      self.ic.subscribe(self.ic.newcameraimage,"/uwsim/camera1")
+      self.collision_ic.subscribe(self.collision_ic.newcameraimage,"/v4l/bowtech_camera/image_raw")
+      self.winchsubscriber = DepthSubscriber()
+      self.winchsubscriber.start()
+
       ## SIGNALS ##
 
       # Create signal for the Plain text, connect to update_string function
@@ -953,13 +1012,8 @@ class Window(QtGui.QWidget):
       self.collision_ic.newcameraimage.connect(self.update_collisioncam_image)
       # For altimeter
       self.altimeter.newsonarrange.connect(self.update_string)
-
-      ## TOPIC SUBSCRIBERS ##
-
-      # Subscribe to pose message that needs to be displayed
-      self.altimeter.subscribe(self.altimeter.newsonarrange)
-      self.ic.subscribe(self.ic.newcameraimage,"/uwsim/camera1")
-      self.collision_ic.subscribe(self.collision_ic.newcameraimage,"/v4l/bowtech_camera/image_raw")
+      # for depth board
+      self.connect(self.winchsubscriber,self.winchsubscriber.signal,self.update_winch_depth)
 
       ## DISPLAY WIDGET ##
       # Display widget on screen
@@ -970,9 +1024,10 @@ class Window(QtGui.QWidget):
       self.ProfilerParam.start()
       #self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
       self.showNormal()
-
-      self.winchreader = DepthReader()
-      self.winchreader.start()
+    
+    def update_winch_depth(self):
+        #self.DepthText.appendPlainText(self.winchsubscriber.wdepth)
+        self.DepthText.setPlainText(self.winchsubscriber.wdepth)
 
     def joystick_changed(self):
         """ This function unlocs the joystick thread, allowing it to update the
@@ -1189,6 +1244,9 @@ class Window(QtGui.QWidget):
         """This funcion is called when the Sonar altimeter combo box for selection of Power Supply Channel is activated.
         Here the value saved in the SDS_Params class for the Power supply channel of the Sonar altimeter is updated."""
         self.SDS_params.altimeter_data_channel = text
+    
+    def ComboWinch_Port_Activated(self,text):
+        print text
 
     def ProfilerPowerCheckbox(self,state):
         """
