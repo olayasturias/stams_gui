@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   laser_geometry
   pcl_ros
-
+  dynamic_reconfigure
   rqt_gui
   rqt_gui_py
   tritech_profiler
@@ -94,10 +94,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
+ generate_dynamic_reconfigure_options(
+   cfg/Winch.cfg
 #   cfg/DynReconf2.cfg
-# )
+ )
 
 ###################################
 ## catkin specific configuration ##
@@ -199,6 +199,7 @@ include_directories(include/stams_gui)
 # catkin_add_nosetests(test)
 
 add_executable(LasertoPC src/LasertoPC.cpp)
+
 
 
 target_link_libraries(LasertoPC ${catkin_LIBRARIES})

@@ -65,12 +65,15 @@ class ParameterServer_Params(QThread):
         self.profiler_client = None
         self.valeport_altimeter_client = None
         self.bowtech_camera = None
+        self.winch_depth_client = None
+
 
     def run(self):
         """
         The run method is a overun method of the QThread class, and starts when required in a separate thread.
 
         """
+        self.winch_depth_client = dynamic_reconfigure.client.Client("/depth_driver")
         self.valeport_altimeter_client = dynamic_reconfigure.client.Client("/valeport_altimeter")
         self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
         
@@ -1177,7 +1180,8 @@ class Window(QtGui.QWidget):
 
         # Reconfigure profiler and altimeter drivers
         profiler_params = {'profiler_port_baudrate': int(baudtxt)}
-        altimeter_params = {'altimeter_port_baudrate': int(baudtxt)}       
+        altimeter_params = {'altimeter_port_baudrate': int(baudtxt)} 
+        depth_params = {'winch_port_baudrate': int(baudtxt)}      
         
         
         try:
@@ -1189,6 +1193,11 @@ class Window(QtGui.QWidget):
             config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
         except:
             rospy.logwarn("Could not update Altimeter params. Are you sure Altimeter is connected?")
+
+        # try:
+        config = self.ProfilerParam.winch_depth_client.update_configuration(depth_params)
+        # except:
+        #     rospy.logwarn("Could not update depth board params. Are you sure Depth board is connected?")
 
 
     def ComboProfiler_Port_Activated(self,text):

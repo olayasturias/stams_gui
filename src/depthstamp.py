@@ -15,6 +15,8 @@ import geometry_msgs.msg
 import tf
 import tf2_ros
 from PyQt4.Qt import QObject
+from dynamic_reconfigure.server import Server
+from stams_gui.cfg import WinchConfig
 
 
 class SonarNotFound(Exception):
@@ -62,13 +64,12 @@ class DepthInfo(QObject):
         self.transf.transform.rotation.w = 1.0
         self.tfbroad = tf2_ros.TransformBroadcaster()
 
-
-
     def __enter__(self):
         """
         Initializes for first use
         """
         self.open()
+        srv = Server(WinchConfig, self.config_callback)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -97,11 +98,26 @@ class DepthInfo(QObject):
 
         rospy.loginfo("Initializing connection with depth board on %s", self.port)
         self.initialized = True
-        self.read()
+        #self.read()
 
 
     def close(self):
         self.conn.close()
+        
+
+    def config_callback(self, config, level):
+        rospy.loginfo("""Reconfigure request: {winch_port_baudrate}, {winch_port}""".format(**config))
+        self.set_params(**config)
+        return config
+
+    def set_params(self, winch_port_baudrate = None,winch_port = None, groups = None):
+        self.port = winch_port
+        self.baudrate = winch_port_baudrate
+        self.close()
+        self.conn = None
+        self.open()
+        #self.read()
+        return self
 
     def send(self, message = None):
         self.conn.send(message)
@@ -140,6 +156,7 @@ class DepthInfo(QObject):
                 rospy.logdebug("Timeout count: %d", timeout_count)
                 if timeout_count >= MAX_TIMEOUT_COUNT:
                     timeout_count = 0
+                rospy.sleep(0.5)
                 # Try again
                 continue
 
@@ -191,5 +208,5 @@ if __name__ == "__main__":
     port = '/dev/ttyUSB0'
     baudrate = 38400
 
-    with DepthInfo(port,baudrate) as firing_system:
-        pass
+    with DepthInfo(port,baudrate) as winch:
+        winch.read()
