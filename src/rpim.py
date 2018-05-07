@@ -1194,10 +1194,10 @@ class Window(QtGui.QWidget):
         except:
             rospy.logwarn("Could not update Altimeter params. Are you sure Altimeter is connected?")
 
-        # try:
-        config = self.ProfilerParam.winch_depth_client.update_configuration(depth_params)
-        # except:
-        #     rospy.logwarn("Could not update depth board params. Are you sure Depth board is connected?")
+        try:
+            config = self.ProfilerParam.winch_depth_client.update_configuration(depth_params)
+        except:
+            rospy.logwarn("Could not update depth board params. Are you sure Depth board is connected?")
 
 
     def ComboProfiler_Port_Activated(self,text):
@@ -1255,7 +1255,14 @@ class Window(QtGui.QWidget):
         self.SDS_params.altimeter_data_channel = text
     
     def ComboWinch_Port_Activated(self,text):
-        print text
+        
+        depth_params = {'winch_port': text}      
+        
+        try:
+            config = self.ProfilerParam.winch_depth_client.update_configuration(depth_params)
+        except:
+            rospy.logwarn("Could not update depth board params. Are you sure Depth board is connected?")
+
 
     def ProfilerPowerCheckbox(self,state):
         """

@@ -29,6 +29,14 @@
         respawn="true">
   </node>
 
+  <!-- Launch Depth info board -->
+  <node name="depth_driver"
+        pkg="stams_gui"
+        type="depthstamp.py"
+        output="screen"
+        respawn="true">
+  </node>
+
   <!-- Launch camera -->
   <!-- Set this to your camera's name -->
   <arg name="cam_name" value="bowtech_camera" />
