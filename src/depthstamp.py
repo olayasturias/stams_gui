@@ -37,7 +37,7 @@ class DepthInfo(QObject):
     """
     *DepthInfo* class for firing system driver
     """
-    def __init__(self, port="/dev/ttyUSB0", baudrate = 115200):
+    def __init__(self, port="/dev/ttyUSB0", baudrate = 38400):
         """
 
         :param port:
@@ -55,7 +55,7 @@ class DepthInfo(QObject):
         self.transf.header.frame_id = 'world'
         self.transf.child_frame_id = 'sonar'
         # Initialize values to publish
-        self.transf.transform.translation.x = 0 
+        self.transf.transform.translation.x = 0
         self.transf.transform.translation.y = 0
         self.transf.transform.translation.z = 0
         self.transf.transform.rotation.x = 0.0
@@ -103,7 +103,7 @@ class DepthInfo(QObject):
 
     def close(self):
         self.conn.close()
-        
+
 
     def config_callback(self, config, level):
         rospy.loginfo("""Reconfigure request: {winch_port_baudrate}, {winch_port}""".format(**config))
@@ -172,18 +172,18 @@ class DepthInfo(QObject):
         if not self.initialized:
             raise SonarNotConfigured
 
-        rospy.logdebug("Waiting for depth message")
+        #rospy.logdebug("Waiting for depth message")
 
         # Determine end time
         end = datetime.datetime.now() + datetime.timedelta(seconds=wait)
 
-        # Wait until received 
+        # Wait until received
         while  datetime.datetime.now() < end:
             try:
                 reply = self.conn.conn.read(4)
 
-                inhex = int(reply.encode('hex'), 32)       
-                
+                inhex = int(reply.encode('hex'), 32)
+
                 return inhex
             except:
                 break

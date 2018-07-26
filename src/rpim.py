@@ -73,10 +73,10 @@ class ParameterServer_Params(QThread):
         The run method is a overun method of the QThread class, and starts when required in a separate thread.
 
         """
+        self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
         self.winch_depth_client = dynamic_reconfigure.client.Client("/depth_driver")
         self.valeport_altimeter_client = dynamic_reconfigure.client.Client("/valeport_altimeter")
-        self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
-        
+
 
 
 
@@ -225,13 +225,13 @@ class altimeter_subscriber(QObject):
 class Joystick_thread(QThread):
     """ *Joystick_thread* class creates a thread apart that updates the joystick measurement
     every certain time
-    
+
     **Attributes**:
 
       .. data:: signal
 
       signal that is emitted to call the slot which updates the velocity commands
-      
+
       .. data:: mutex
 
       this mutex only controls the access of the joystick of the buttons
@@ -241,7 +241,7 @@ class Joystick_thread(QThread):
 
       this variable controls that the joystick is not writing over the ROV a the same time the
       buttons are being pressed
-      
+
     """
     def __init__(self):
       ''' Initialize the Joystick thread. Here the signal and the mutex are initialized
@@ -841,8 +841,8 @@ class Window(QtGui.QWidget):
 
       layoutFixBtn = QtGui.QHBoxLayout()
       layoutFixBtn.addWidget(btnfix1)
-      layoutFixBtn.addWidget(btnfix2) 
-      layoutFixBtn.addWidget(btnfix3) 
+      layoutFixBtn.addWidget(btnfix2)
+      layoutFixBtn.addWidget(btnfix3)
 
       # Fixing combo and buttons
       layoutFix2 = QtGui.QVBoxLayout()
@@ -1027,7 +1027,7 @@ class Window(QtGui.QWidget):
       self.ProfilerParam.start()
       #self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
       self.showNormal()
-    
+
     def update_winch_depth(self):
         #self.DepthText.appendPlainText(self.winchsubscriber.wdepth)
         self.DepthText.setPlainText(self.winchsubscriber.wdepth)
@@ -1180,10 +1180,10 @@ class Window(QtGui.QWidget):
 
         # Reconfigure profiler and altimeter drivers
         profiler_params = {'profiler_port_baudrate': int(baudtxt)}
-        altimeter_params = {'altimeter_port_baudrate': int(baudtxt)} 
-        depth_params = {'winch_port_baudrate': int(baudtxt)}      
-        
-        
+        altimeter_params = {'altimeter_port_baudrate': int(baudtxt)}
+        depth_params = {'winch_port_baudrate': int(baudtxt)}
+
+
         try:
             config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
         except:
@@ -1253,11 +1253,11 @@ class Window(QtGui.QWidget):
         """This funcion is called when the Sonar altimeter combo box for selection of Power Supply Channel is activated.
         Here the value saved in the SDS_Params class for the Power supply channel of the Sonar altimeter is updated."""
         self.SDS_params.altimeter_data_channel = text
-    
+
     def ComboWinch_Port_Activated(self,text):
-        
-        depth_params = {'winch_port': text}      
-        
+
+        depth_params = {'winch_port': text}
+
         try:
             config = self.ProfilerParam.winch_depth_client.update_configuration(depth_params)
         except:
@@ -1322,13 +1322,13 @@ class Window(QtGui.QWidget):
             self.SDS_params.profiler_data_enabled = 0
 
         profiler_params = {'port_enabled': str(self.SDS_params.profiler_data_enabled)}
-        
+
         print profiler_params
-        
-        try:
-            config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
-        except:
-            rospy.logwarn("Could not update profiler params. Are you sure Profiler is connected?")
+
+        # try:
+        config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
+        # except:
+        #     rospy.logwarn("Could not update profiler params. Are you sure Profiler is connected?")
 
         try:
             config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
@@ -1349,6 +1349,8 @@ class Window(QtGui.QWidget):
 
         altimeter_params = {'altimeter_port_enabled': str(self.SDS_params.altimeter_data_enabled)}
 
+        print altimeter_params
+
 
         try:
             config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
@@ -1359,7 +1361,7 @@ class Window(QtGui.QWidget):
             config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
         except:
             rospy.logwarn("Could not update params. Are you sure Profiler is connected?")
-            
+
 
 
 
