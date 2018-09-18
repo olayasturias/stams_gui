@@ -95,13 +95,16 @@ class SDS_Params():
         self.camera_channel    = '/dev/ttyUSB0'
         self.altimeter_channel = '/dev/ttyUSB0'
 
-        self.profiler_pow_channel  = 'A'
-        self.camera_pow_channel    = 'C'
-        self.altimeter_pow_channel = 'B'
+        # self.profiler_pow_channel  = 'A'
+        # self.camera_pow_channel    = 'C'
+        # self.altimeter_pow_channel = 'B'
 
         self.profiler_pow_enabled   = 0
         self.camera_pow_enabled     = 0
         self.altimeter_pow_enabled  = 0
+
+        self.profiler_data_enabled   = 0
+        self.altimeter_data_enabled  = 0
 
         self.profiler_data_channel  = '2'
         self.camera_data_channel    = '1'
@@ -114,15 +117,14 @@ class SDS_Params():
 
         :return:
         """
-        self.profiler_pow_message  = '+++' + str(self.profiler_pow_channel) + str(self.profiler_pow_enabled) +' ;'
-        self.camera_pow_message    = '+++' + str(self.camera_pow_channel)   + str(self.camera_pow_enabled)   + ';'
-        self.altimeter_pow_message = '+++' + str(self.altimeter_pow_channel)+ str(self.altimeter_pow_enabled)+ ';'
+        self.profiler_pow_message  = '#0' + 'SON' + str(self.profiler_pow_enabled)
+        self.camera_pow_message    = '#0' + 'CAM' + str(self.camera_pow_enabled)
+        self.altimeter_pow_message = '#0' + 'ALT' + str(self.altimeter_pow_enabled)
 
-        self.profiler_data_message  = '+++' + str(self.profiler_data_channel) + ';'
-        self.camera_data_message    = '+++' + str(self.camera_data_channel)   + ';'
-        self.altimeter_data_message = '+++' + str(self.altimeter_data_channel)+ ';'
+        self.profiler_data_message  = '#0' + '#0SRO0' + '#0SSO' + str(self.profiler_data_enabled)
+        self.altimeter_data_message = '#0' + '#0SRO0' + '#0SSO' + str(int(not self.altimeter_data_enabled))
 
-        self.baudrate_message       = '+++' + 'M' + str('C' if (self.baudrate == 115200) else self.baudrate/9600)+';'
+        self.baudrate_message       = '#0' + 'M' + str('C' if (self.baudrate == 115200) else self.baudrate/9600)
 
     def send(self, port, message):
         """
@@ -426,7 +428,7 @@ class Window(QtGui.QWidget):
       lblnavpcas                = QtGui.QLabel('Speed & Direction control', self)
       lblprofiling_sonar        = QtGui.QLabel('Profiling Sonar', self)
       lblprofiler_port_pcas     = QtGui.QLabel('Port', self)
-      lblprofiler_pow_channel   = QtGui.QLabel('Power Supply Channel', self)
+      # lblprofiler_pow_channel   = QtGui.QLabel('Power Supply Channel', self)
       lblprofiler_data_channel  = QtGui.QLabel('Data Channel', self)
 
       lineprofcoll = QtGui.QFrame() # linea separatoria
@@ -434,7 +436,7 @@ class Window(QtGui.QWidget):
       lineprofcoll.setFrameShadow(QtGui.QFrame.Sunken)
 
       lblcoll_camera            = QtGui.QLabel('Collision Camera', self)
-      lblcam_pow_channel        = QtGui.QLabel('Power Supply Channel', self)
+      # lblcam_pow_channel        = QtGui.QLabel('Power Supply Channel', self)
       lblcollcamera_port_pcas   = QtGui.QLabel('Port', self)
 
       linecollson = QtGui.QFrame() # linea separatoria
@@ -443,7 +445,7 @@ class Window(QtGui.QWidget):
 
       lblsonar_alt              = QtGui.QLabel('Sonar Altimeter')
       lblsonaralt_port_pcas     = QtGui.QLabel('Port', self)
-      lblalt_pow_channel        = QtGui.QLabel('Power Supply Channel', self)
+      # lblalt_pow_channel        = QtGui.QLabel('Power Supply Channel', self)
       lblalt_data_channel       = QtGui.QLabel('Data Channel', self)
 
       linesonbut = QtGui.QFrame() # linea separatoria
@@ -499,14 +501,14 @@ class Window(QtGui.QWidget):
       comboprofiler_port_pcas = QtGui.QComboBox(self)
       comboprofiler_port_pcas.setEditable(True)
 
-      comboprofiler_pow_channel = QtGui.QComboBox(self)
-      comboprofiler_pow_channel.addItem("A")
-      comboprofiler_pow_channel.addItem("B")
-      comboprofiler_pow_channel.addItem("C")
+      # comboprofiler_pow_channel = QtGui.QComboBox(self)
+      # comboprofiler_pow_channel.addItem("A")
+      # comboprofiler_pow_channel.addItem("B")
+      # comboprofiler_pow_channel.addItem("C")
 
       # connect to funcions
       comboprofiler_port_pcas.activated[str].connect(self.ComboProfiler_Port_Activated)
-      comboprofiler_pow_channel.activated[str].connect(self.ComboProfiler_Pow_Activated)
+      # comboprofiler_pow_channel.activated[str].connect(self.ComboProfiler_Pow_Activated)
 
       comboprofiler_data_channel = QtGui.QComboBox(self)
       comboprofiler_data_channel.addItem("2")
@@ -519,15 +521,15 @@ class Window(QtGui.QWidget):
       combocollcamera_port_pcas = QtGui.QComboBox(self)
       combocollcamera_port_pcas.setEditable(True)
 
-      combocam_pow_channel = QtGui.QComboBox(self)
-      combocam_pow_channel.addItem("C")
-      combocam_pow_channel.addItem("A")
-      combocam_pow_channel.addItem("B")
+      # combocam_pow_channel = QtGui.QComboBox(self)
+      # combocam_pow_channel.addItem("C")
+      # combocam_pow_channel.addItem("A")
+      # combocam_pow_channel.addItem("B")
 
 
       # connect to funcions
       combocollcamera_port_pcas.activated[str].connect(self.ComboCamera_Port_Activated)
-      combocam_pow_channel.activated[str].connect(self.ComboCam_Pow_Activated)
+      # combocam_pow_channel.activated[str].connect(self.ComboCam_Pow_Activated)
 
 
       # for altimeter
@@ -547,14 +549,14 @@ class Window(QtGui.QWidget):
           combowinchdepth.addItem("/dev/ttyUSB" + str(i))
 
 
-      comboalt_pow_channel = QtGui.QComboBox(self)
-      comboalt_pow_channel.addItem("B")
-      comboalt_pow_channel.addItem("A")
-      comboalt_pow_channel.addItem("C")
+      # comboalt_pow_channel = QtGui.QComboBox(self)
+      # comboalt_pow_channel.addItem("B")
+      # comboalt_pow_channel.addItem("A")
+      # comboalt_pow_channel.addItem("C")
 
       # connect to funcions
       combosonaralt_port_pcas.activated[str].connect(self.ComboAltimeter_Port_Activated)
-      comboalt_pow_channel.activated[str].connect(self.ComboAltimeter_Pow_Activated)
+      # comboalt_pow_channel.activated[str].connect(self.ComboAltimeter_Pow_Activated)
       combowinchdepth.activated[str].connect(self.ComboWinch_Port_Activated)
 
       comboalt_data_channel = QtGui.QComboBox(self)
@@ -917,9 +919,9 @@ class Window(QtGui.QWidget):
       layout1Hport_profiler.addWidget(lblprofiler_port_pcas)
       layout1Hport_profiler.addWidget(comboprofiler_port_pcas)
 
-      layout1Hport_profiler2 = QtGui.QHBoxLayout()
-      layout1Hport_profiler2.addWidget(lblprofiler_pow_channel)
-      layout1Hport_profiler2.addWidget(comboprofiler_pow_channel)
+      # layout1Hport_profiler2 = QtGui.QHBoxLayout()
+      # layout1Hport_profiler2.addWidget(lblprofiler_pow_channel)
+      # layout1Hport_profiler2.addWidget(comboprofiler_pow_channel)
 
       layout1Hport_profiler3 = QtGui.QHBoxLayout()
       layout1Hport_profiler3.addWidget(lblprofiler_data_channel)
@@ -929,17 +931,17 @@ class Window(QtGui.QWidget):
       layout1Hport_collcamera.addWidget(lblcollcamera_port_pcas)
       layout1Hport_collcamera.addWidget(combocollcamera_port_pcas)
 
-      layout1Hcamera = QtGui.QHBoxLayout()
-      layout1Hcamera.addWidget(lblcam_pow_channel)
-      layout1Hcamera.addWidget(combocam_pow_channel)
+      # layout1Hcamera = QtGui.QHBoxLayout()
+      # layout1Hcamera.addWidget(lblcam_pow_channel)
+      # layout1Hcamera.addWidget(combocam_pow_channel)
 
       layout1Hport_sonaralt = QtGui.QHBoxLayout()
       layout1Hport_sonaralt.addWidget(lblsonaralt_port_pcas)
       layout1Hport_sonaralt.addWidget(combosonaralt_port_pcas)
 
-      layout1Hport_sonaralt2 = QtGui.QHBoxLayout()
-      layout1Hport_sonaralt2.addWidget(lblalt_pow_channel)
-      layout1Hport_sonaralt2.addWidget(comboalt_pow_channel)
+      # layout1Hport_sonaralt2 = QtGui.QHBoxLayout()
+      # layout1Hport_sonaralt2.addWidget(lblalt_pow_channel)
+      # layout1Hport_sonaralt2.addWidget(comboalt_pow_channel)
 
       layout1Hport_sonaralt3 = QtGui.QHBoxLayout()
       layout1Hport_sonaralt3.addWidget(lblalt_data_channel)
@@ -956,19 +958,19 @@ class Window(QtGui.QWidget):
       layout1V2.addWidget(linebr)
       layout1V2.addWidget(lblprofiling_sonar)
       layout1V2.addLayout(layout1Hport_profiler)
-      layout1V2.addLayout(layout1Hport_profiler2)
+      # layout1V2.addLayout(layout1Hport_profiler2)
       layout1V2.addLayout(layout1Hport_profiler3)
       layout1V2.addWidget(self.cb_profiler_power)
       layout1V2.addWidget(self.cb_profiler_data)
       layout1V2.addWidget(lineprofcoll)
       layout1V2.addWidget(lblcoll_camera)
       layout1V2.addLayout(layout1Hport_collcamera)
-      layout1V2.addLayout(layout1Hcamera)
+      # layout1V2.addLayout(layout1Hcamera)
       layout1V2.addWidget(self.cb_cam_power)
       layout1V2.addWidget(linecollson)
       layout1V2.addWidget(lblsonar_alt)
       layout1V2.addLayout(layout1Hport_sonaralt)
-      layout1V2.addLayout(layout1Hport_sonaralt2)
+      # layout1V2.addLayout(layout1Hport_sonaralt2)
       layout1V2.addLayout(layout1Hport_sonaralt3)
       layout1V2.addWidget(self.cb_alt_power)
       layout1V2.addWidget(self.cb_alt_data)
