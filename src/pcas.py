@@ -395,27 +395,6 @@ class Window(QtGui.QWidget):
 
       ## LABELS ##
 
-      # For ROV
-
-      lblfix     = QtGui.QLabel('Installation tool', self)
-      lblfixport = QtGui.QLabel('Port', self)
-      lblfixshot = QtGui.QLabel('Trigger', self)
-
-      linefix = QtGui.QFrame() # linea separatoria
-      linefix.setFrameShape(QtGui.QFrame.HLine)
-      linefix.setFrameShadow(QtGui.QFrame.Sunken)
-
-      lblgui     = QtGui.QLabel('Scene selection', self)
-
-      linescene = QtGui.QFrame() # linea separatoria
-      linescene.setFrameShape(QtGui.QFrame.HLine)
-      linescene.setFrameShadow(QtGui.QFrame.Sunken)
-
-      lblnav     = QtGui.QLabel('Navigation Mode', self)
-
-      linenav = QtGui.QFrame() # linea separatoria
-      linenav.setFrameShape(QtGui.QFrame.HLine)
-      linenav.setFrameShadow(QtGui.QFrame.Sunken)
 
       # For PCAS
       lbldepth = QtGui.QLabel('Depth')
@@ -430,8 +409,7 @@ class Window(QtGui.QWidget):
       lblnavpcas                = QtGui.QLabel('Speed & Direction control', self)
       lblprofiling_sonar        = QtGui.QLabel('Profiling Sonar', self)
       lblprofiler_port_pcas     = QtGui.QLabel('Port', self)
-      # lblprofiler_pow_channel   = QtGui.QLabel('Power Supply Channel', self)
-      # lblprofiler_data_channel  = QtGui.QLabel('Data Channel', self)
+
 
       lineprofcoll = QtGui.QFrame() # linea separatoria
       lineprofcoll.setFrameShape(QtGui.QFrame.HLine)
@@ -447,8 +425,6 @@ class Window(QtGui.QWidget):
 
       lblsonar_alt              = QtGui.QLabel('Sonar Altimeter')
       lblsonaralt_port_pcas     = QtGui.QLabel('Port', self)
-      # lblalt_pow_channel        = QtGui.QLabel('Power Supply Channel', self)
-      # lblalt_data_channel       = QtGui.QLabel('Data Channel', self)
 
       linesonbut = QtGui.QFrame() # linea separatoria
       linesonbut.setFrameShape(QtGui.QFrame.HLine)
@@ -463,24 +439,6 @@ class Window(QtGui.QWidget):
 
       ## COMBO BOX ##
 
-      # ROV
-
-      combofix = QtGui.QComboBox(self)
-      combofix.setEditable(True)
-
-
-      # connect to funcions
-      combofix.activated[str].connect(self.ComboFix_Port_Activated)
-
-      guimode = QtGui.QComboBox(self)
-      guimode.addItem("Simulator")
-      guimode.addItem("Real ROV")
-
-      guimode.activated[str].connect(self.Comboguimodeactivated)
-
-      navmode = QtGui.QComboBox(self)
-      navmode.addItem("Teleoperated")
-      navmode.addItem("Autonomous")
 
       # PCAS
 
@@ -503,31 +461,14 @@ class Window(QtGui.QWidget):
       comboprofiler_port_pcas = QtGui.QComboBox(self)
       comboprofiler_port_pcas.setEditable(True)
 
-      # comboprofiler_pow_channel = QtGui.QComboBox(self)
-      # comboprofiler_pow_channel.addItem("A")
-      # comboprofiler_pow_channel.addItem("B")
-      # comboprofiler_pow_channel.addItem("C")
 
       # connect to funcions
       comboprofiler_port_pcas.activated[str].connect(self.ComboProfiler_Port_Activated)
-      # comboprofiler_pow_channel.activated[str].connect(self.ComboProfiler_Pow_Activated)
 
-      # comboprofiler_data_channel = QtGui.QComboBox(self)
-      # comboprofiler_data_channel.addItem("2")
-      # comboprofiler_data_channel.addItem("1")
-
-      # connect to funcions
-      # comboprofiler_data_channel.activated[str].connect(self.ComboProfiler_Data_Activated)
 
       # for camera
       combocollcamera_port_pcas = QtGui.QComboBox(self)
       combocollcamera_port_pcas.setEditable(True)
-
-      # combocam_pow_channel = QtGui.QComboBox(self)
-      # combocam_pow_channel.addItem("C")
-      # combocam_pow_channel.addItem("A")
-      # combocam_pow_channel.addItem("B")
-
 
       # connect to funcions
       combocollcamera_port_pcas.activated[str].connect(self.ComboCamera_Port_Activated)
@@ -547,26 +488,13 @@ class Window(QtGui.QWidget):
           comboprofiler_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
           combocollcamera_port_pcas.addItem("/dev/ttyUSB" + str(i))
           combosonaralt_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
-          combofix.addItem(  "/dev/ttyUSB" + str(i))
           combowinchdepth.addItem("/dev/ttyUSB" + str(i))
 
-
-      # comboalt_pow_channel = QtGui.QComboBox(self)
-      # comboalt_pow_channel.addItem("B")
-      # comboalt_pow_channel.addItem("A")
-      # comboalt_pow_channel.addItem("C")
 
       # connect to funcions
       combosonaralt_port_pcas.activated[str].connect(self.ComboAltimeter_Port_Activated)
       # comboalt_pow_channel.activated[str].connect(self.ComboAltimeter_Pow_Activated)
       combowinchdepth.activated[str].connect(self.ComboWinch_Port_Activated)
-
-      # comboalt_data_channel = QtGui.QComboBox(self)
-      # comboalt_data_channel.addItem("1")
-      # comboalt_data_channel.addItem("2")
-
-      # connect to funcions
-      # comboalt_data_channel.activated[str].connect(self.ComboAltimeter_Data_Activated)
 
       ## CHECKBOX ##
 
@@ -576,10 +504,13 @@ class Window(QtGui.QWidget):
 
       self.cb_profiler_power = QtGui.QCheckBox('Power Up', self)
       self.cb_profiler_power.setChecked(True)
+      self.cb_profiler_power.setToolTip('Power UP/DOWN Profiling Sonar Power (#0SON0/1)')
       self.cb_cam_power      = QtGui.QCheckBox('Power Up', self)
       self.cb_cam_power.setChecked(True)
+      self.cb_cam_power.setToolTip('Power UP/DOWN PCAS Camera Power (#0CAM0/1)')
       self.cb_alt_power      = QtGui.QCheckBox('Power Up', self)
       self.cb_alt_power.setChecked(True)
+      self.cb_alt_power.setToolTip('Power UP/DOWN Altimeter Power (#0ALT0/1)')
 
       # Callbacks
 
@@ -590,8 +521,11 @@ class Window(QtGui.QWidget):
       # For data transmission selection
 
       self.cb_profiler_data = QtGui.QCheckBox('Data Transmission', self)
+      self.cb_profiler_data.setToolTip('Switch Data transmission to Profiler (#0SSO0/1)')
       self.cb_cam_data      = QtGui.QCheckBox('Data Transmission', self)
+      self.cb_profiler_data.setToolTip('Switch between cameras to PCAS camera (#0VID0/1)')
       self.cb_alt_data      = QtGui.QCheckBox('Data Transmission', self)
+      self.cb_profiler_data.setToolTip('Switch Data transmission to Altimeter (#0SSO0/1)')
 
       # Callbacks
 
@@ -601,89 +535,10 @@ class Window(QtGui.QWidget):
 
 
 
-      ## JOYSTICK ##
-      self.jb = pg.JoystickButton()
 
-      self.jb.setFixedWidth(120)
-      self.jb.setFixedHeight(120)
-      region = QtGui.QRegion(QtCore.QRect(self.jb.x()+5, self.jb.y()+5 ,110 ,110), QtGui.QRegion.Ellipse)
-      self.jb.setStyleSheet("background-color: rgb(176,196,222);\n"
-                            "border:1px solid rgb(0,0,0);")
-      self.jb.setMask(region)
-
-      self.jthread = Joystick_thread()
-      self.connect(self.jthread, self.jthread.signal, self.update_joystick)
-
-      self.jb.sigStateChanged.connect(self.joystick_changed)
-
-      self.jthread.start()
 
       ## BUTTONS ##
 
-      # for ROV
-
-      # Buttons for fixing mechanism activation
-      btnfix1 = QtGui.QPushButton('1',self)
-      self.connect(btnfix1, QtCore.SIGNAL("clicked()"),
-                   self.btnfix1_clicked)
-      btnfix2 = QtGui.QPushButton('2',self)
-      self.connect(btnfix2, QtCore.SIGNAL("clicked()"),
-                   self.btnfix2_clicked)
-      btnfix3 = QtGui.QPushButton('3',self)
-      self.connect(btnfix3, QtCore.SIGNAL("clicked()"),
-                   self.btnfix3_clicked)
-
-      # Create button and set tooltip
-      btnLEFT = QtGui.QPushButton('<', self)
-      btnLEFT.setToolTip('Button for rotating anti-clockwise the ROV')
-      # Moving and resizing button. sizehint gives recommended size
-      btnLEFT.resize(btnLEFT.sizeHint())
-      # Maintain it pressed when activated
-      btnLEFT.setCheckable(True)
-      # Keep executing function while button pressed
-      btnLEFT.setAutoRepeat(True)
-      # Connect button to slot
-      self.connect(btnLEFT, QtCore.SIGNAL("clicked()"),
-                   self.btnLEFT_clicked)
-
-      # Create button and set tooltip
-      btnRGT = QtGui.QPushButton('>', self)
-      btnRGT.setToolTip('Button for rotating clockwise the ROV')
-      # Moving and resizing button. sizehint gives recommended size
-      btnRGT.resize(btnRGT.sizeHint())
-      # Maintain it pressed when activated
-      btnRGT.setCheckable(True)
-      # Keep executing function while button pressed
-      btnRGT.setAutoRepeat(True)
-      # Connect button to slot
-      self.connect(btnRGT, QtCore.SIGNAL("clicked()"),
-                   self.btnRGT_clicked)
-
-      # Create button and set tooltip
-      btnUP = QtGui.QPushButton('UP', self)
-      btnUP.setToolTip('Button for moving UP the ROV')
-      # Moving and resizing button. sizehint gives recommended size
-      btnUP.resize(btnUP.sizeHint())
-      # Maintain it pressed when activated
-      btnUP.setCheckable(True)
-      # Keep executing function while button pressed
-      btnUP.setAutoRepeat(True)
-      # Connect button to slot
-      self.connect(btnUP, QtCore.SIGNAL("clicked()"),
-                   self.btnUP_clicked)
-
-      # Create button and set tooltip
-      btnDOWN = QtGui.QPushButton('DOWN', self)
-      btnDOWN.setToolTip('Button for moving DOWN the ROV')
-      # Moving and resizing button. sizehint gives recommended size
-      btnDOWN.resize(btnDOWN.sizeHint())
-      # Maintain it pressed when activated
-      btnDOWN.setCheckable(True)
-      # Keep executing function while button pressed
-      btnDOWN.setAutoRepeat(True)
-      # Connect button to slot
-      self.connect(btnDOWN, QtCore.SIGNAL("clicked()"),
-                   self.btnDOWN_clicked)
 
       # For PCAS
 
@@ -747,14 +602,6 @@ class Window(QtGui.QWidget):
 
       ## PLAIN TEXT ##
 
-      # For ROV tab
-
-      # Create plain text
-      self.StatusText = QtGui.QPlainTextEdit("Waiting for first message")
-      # With this, the user wont be able to edit plain text
-      self.StatusText.setReadOnly(1)
-      # Scroll automatically to the bottom of the text
-      self.StatusText.centerCursor()
 
       # For PCAS tab
 
@@ -774,16 +621,6 @@ class Window(QtGui.QWidget):
 
       ## IMAGE VIEW ##
 
-      # Create window with GraphicsView widget
-      self.imgwin = pg.GraphicsLayoutWidget()
-
-      view = self.imgwin.addViewBox()
-      # Create image item
-      self.img = pg.ImageItem(border='w')
-      #print self.img.dataTransform()
-      view.addItem(self.img)
-      self.ic = image_converter()
-      self.imgwin.rotate(90.0)
 
       # For PCAS
       self.imgwinpcas = pg.GraphicsLayoutWidget()
@@ -794,95 +631,11 @@ class Window(QtGui.QWidget):
       viewpcas.addItem(self.collisioncameraimg)
       self.collision_ic = image_converter()
 
-      ## 3D GRAPICS ##
-
-
       # For sonar altimeter
       self.altimeter = altimeter_subscriber()
 
 
-      ## TABS ##
-      tab_widget = QtGui.QTabWidget()
-      tab1       = QtGui.QWidget()
-      tab2       = QtGui.QWidget()
-
       ## POSITIONING ##
-
-      # create layout with ROV image and collision altimeter text
-      layoutImgStat = QtGui.QVBoxLayout()
-      layoutImgStat.addWidget(self.imgwin)
-      layoutImgStat.addWidget(self.StatusText)
-      # Put it inside a QWidget so it can be added to QSplitter
-      layoutw = QtGui.QWidget()
-      layoutw.setLayout(layoutImgStat)
-
-      splitter = QtGui.QSplitter(self)
-      splitter.addWidget(layoutw)
-      #splitter.addWidget(self.StatusText)
-
-      # 3D graphics and Status text vertical between them, form layoutV1
-      layoutV1 = QtGui.QVBoxLayout()
-      layoutV1.addWidget(splitter)
-
-      # BtnUP and btnDOWN vertical between them (with joystick), form layoutV2
-      layoutV2 = QtGui.QVBoxLayout()
-      layoutV2.addWidget(btnUP)
-      layoutV2.addWidget(self.jb)
-      layoutV2.addWidget(btnDOWN)
-
-      #BtnRIGHT, layoutV2 and btnLEFT placed horizontally, form LayoutH1
-      layoutH1 = QtGui.QHBoxLayout()
-      layoutH1.addWidget(btnLEFT)
-      layoutH1.addLayout(layoutV2)
-      layoutH1.addWidget(btnRGT)
-
-      # Fixing mechanism labels
-      layoutFix1 = QtGui.QVBoxLayout()
-      layoutFix1.addWidget(lblfixport)
-      layoutFix1.addWidget(lblfixshot)
-
-      # FIXING buttons
-
-      layoutFixBtn = QtGui.QHBoxLayout()
-      layoutFixBtn.addWidget(btnfix1)
-      layoutFixBtn.addWidget(btnfix2)
-      layoutFixBtn.addWidget(btnfix3)
-
-      # Fixing combo and buttons
-      layoutFix2 = QtGui.QVBoxLayout()
-      layoutFix2.addWidget(combofix)
-      layoutFix2.addLayout(layoutFixBtn)
-
-      # Fixing elements together
-      layoutFixtot = QtGui.QHBoxLayout()
-      layoutFixtot.addLayout(layoutFix1)
-      layoutFixtot.addLayout(layoutFix2)
-
-      # 4th vertical column: fix/scene sel./ navigation/ joystick
-      layoutV3 = QtGui.QVBoxLayout()
-      layoutV3.addWidget(lblfix)
-      layoutV3.addLayout(layoutFixtot)
-      layoutV3.addWidget(linefix)
-      layoutV3.addWidget(lblgui)
-      layoutV3.addWidget(guimode)
-      layoutV3.addWidget(linescene)
-      layoutV3.addWidget(lblnav)
-      layoutV3.addWidget(navmode)
-      layoutV3.addWidget(linenav)
-
-      # Mode selection with navigation controllers
-      layoutV4 = QtGui.QVBoxLayout()
-      layoutV4.addLayout(layoutV3)
-      layoutV4.addLayout(layoutH1)
-
-      # LayoutV1 and LayoutV2 horizontal
-      layoutH2 = QtGui.QHBoxLayout(tab1)
-      layoutH2.addLayout(layoutV1)
-      layoutH2.addLayout(layoutV4)
-
-      # Layout of PCAS tab
-
-      # winch nav buttons
 
       # BtnUP and btnDOWN vertical between them (with joystick), form layoutV2
       layout1V1 = QtGui.QVBoxLayout()
@@ -921,33 +674,13 @@ class Window(QtGui.QWidget):
       layout1Hport_profiler.addWidget(lblprofiler_port_pcas)
       layout1Hport_profiler.addWidget(comboprofiler_port_pcas)
 
-      # layout1Hport_profiler2 = QtGui.QHBoxLayout()
-      # layout1Hport_profiler2.addWidget(lblprofiler_pow_channel)
-      # layout1Hport_profiler2.addWidget(comboprofiler_pow_channel)
-
-      # layout1Hport_profiler3 = QtGui.QHBoxLayout()
-      # layout1Hport_profiler3.addWidget(lblprofiler_data_channel)
-      # layout1Hport_profiler3.addWidget(comboprofiler_data_channel)
-
       layout1Hport_collcamera = QtGui.QHBoxLayout()
       layout1Hport_collcamera.addWidget(lblcollcamera_port_pcas)
       layout1Hport_collcamera.addWidget(combocollcamera_port_pcas)
 
-      # layout1Hcamera = QtGui.QHBoxLayout()
-      # layout1Hcamera.addWidget(lblcam_pow_channel)
-      # layout1Hcamera.addWidget(combocam_pow_channel)
-
       layout1Hport_sonaralt = QtGui.QHBoxLayout()
       layout1Hport_sonaralt.addWidget(lblsonaralt_port_pcas)
       layout1Hport_sonaralt.addWidget(combosonaralt_port_pcas)
-
-      # layout1Hport_sonaralt2 = QtGui.QHBoxLayout()
-      # layout1Hport_sonaralt2.addWidget(lblalt_pow_channel)
-      # layout1Hport_sonaralt2.addWidget(comboalt_pow_channel)
-
-      # layout1Hport_sonaralt3 = QtGui.QHBoxLayout()
-      # layout1Hport_sonaralt3.addWidget(lblalt_data_channel)
-      # layout1Hport_sonaralt3.addWidget(comboalt_data_channel)
 
       layoutwinch_port = QtGui.QHBoxLayout()
       layoutwinch_port.addWidget(lblwinchdepth_port)
@@ -982,17 +715,11 @@ class Window(QtGui.QWidget):
       layout1V2.addLayout(layoutwinch_port)
 
       # buttons + scatter widget
-      layout1H2 = QtGui.QHBoxLayout(tab2)
+      layout1H2 = QtGui.QHBoxLayout()
       layout1H2.addWidget(splitterpcas)
       layout1H2.addLayout(layout1V2)
 
-      tab_widget.addTab(tab1, "ROV")
-      tab_widget.addTab(tab2, "PCAS")
-
-      mainLayout = QtGui.QVBoxLayout()
-      mainLayout.addWidget(tab_widget)
-
-      self.setLayout(mainLayout)
+      self.setLayout(layout1H2)
 
       ## WINDOW DATA ##
 
@@ -1004,7 +731,7 @@ class Window(QtGui.QWidget):
 
       # Subscribe to pose message that needs to be displayed
       self.altimeter.subscribe(self.altimeter.newsonarrange)
-      self.ic.subscribe(self.ic.newcameraimage,"/uwsim/camera1")
+
       self.collision_ic.subscribe(self.collision_ic.newcameraimage,"/v4l/bowtech_camera/image_raw")
       self.winchsubscriber = DepthSubscriber()
       self.winchsubscriber.start()
@@ -1014,8 +741,7 @@ class Window(QtGui.QWidget):
       # Create signal for the Plain text, connect to update_string function
       #self.ps.newstring.connect(self.update_string)
       # Signal for the new image received
-      # for ROV
-      self.ic.newcameraimage.connect(self.update_ROV_image)
+
       # for collision avoidance camera
       self.collision_ic.newcameraimage.connect(self.update_collisioncam_image)
       # For altimeter
