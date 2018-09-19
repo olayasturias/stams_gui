@@ -391,7 +391,7 @@ class Window(QtGui.QWidget):
 
       # Font used to render tooltips, and text displayed
       QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 10))
-      self.setToolTip('This is a <b>QWidget</b> widget')
+
 
       ## LABELS ##
 
@@ -400,7 +400,6 @@ class Window(QtGui.QWidget):
       lbldepth = QtGui.QLabel('Depth')
       lblobstacle = QtGui.QLabel('Distance to obstacle')
 
-      lblbaudrate               = QtGui.QLabel('Baudrate')
 
       linebr = QtGui.QFrame() # linea separatoria
       linebr.setFrameShape(QtGui.QFrame.HLine)
@@ -441,19 +440,6 @@ class Window(QtGui.QWidget):
 
 
       # PCAS
-
-      # baudrate (sent only to SDS)
-
-      comboBaudrate = QtGui.QComboBox(self)
-      comboBaudrate.addItem("115200")
-      comboBaudrate.addItem("57600")
-      comboBaudrate.addItem("38400")
-      comboBaudrate.addItem("28800")
-      comboBaudrate.addItem("19200")
-      comboBaudrate.addItem("14400")
-      comboBaudrate.addItem("9600")
-
-      comboBaudrate.activated[str].connect(self.ComboBaudActivated)
 
       # select serial port
 
@@ -505,9 +491,11 @@ class Window(QtGui.QWidget):
       self.cb_profiler_power = QtGui.QCheckBox('Power Up', self)
       self.cb_profiler_power.setChecked(True)
       self.cb_profiler_power.setToolTip('Power UP/DOWN Profiling Sonar Power (#0SON0/1)')
+
       self.cb_cam_power      = QtGui.QCheckBox('Power Up', self)
       self.cb_cam_power.setChecked(True)
       self.cb_cam_power.setToolTip('Power UP/DOWN PCAS Camera Power (#0CAM0/1)')
+
       self.cb_alt_power      = QtGui.QCheckBox('Power Up', self)
       self.cb_alt_power.setChecked(True)
       self.cb_alt_power.setToolTip('Power UP/DOWN Altimeter Power (#0ALT0/1)')
@@ -522,10 +510,12 @@ class Window(QtGui.QWidget):
 
       self.cb_profiler_data = QtGui.QCheckBox('Data Transmission', self)
       self.cb_profiler_data.setToolTip('Switch Data transmission to Profiler (#0SSO0/1)')
+
       self.cb_cam_data      = QtGui.QCheckBox('Data Transmission', self)
-      self.cb_profiler_data.setToolTip('Switch between cameras to PCAS camera (#0VID0/1)')
+      self.cb_cam_data.setToolTip('Switch between cameras to PCAS camera (#0VID0/1)')
+
       self.cb_alt_data      = QtGui.QCheckBox('Data Transmission', self)
-      self.cb_profiler_data.setToolTip('Switch Data transmission to Altimeter (#0SSO0/1)')
+      self.cb_alt_data.setToolTip('Switch Data transmission to Altimeter (#0SSO0/1)')
 
       # Callbacks
 
@@ -666,10 +656,6 @@ class Window(QtGui.QWidget):
 
       # Grouping sensor labels with their combo boxes
 
-      layout1Hbaudrate = QtGui.QHBoxLayout()
-      layout1Hbaudrate.addWidget(lblbaudrate)
-      layout1Hbaudrate.addWidget(comboBaudrate)
-
       layout1Hport_profiler = QtGui.QHBoxLayout()
       layout1Hport_profiler.addWidget(lblprofiler_port_pcas)
       layout1Hport_profiler.addWidget(comboprofiler_port_pcas)
@@ -689,7 +675,6 @@ class Window(QtGui.QWidget):
 
       #label vertical, with nav buttons and combo boxes
       layout1V2 = QtGui.QVBoxLayout()
-      layout1V2.addLayout(layout1Hbaudrate)
       layout1V2.addWidget(linebr)
       layout1V2.addWidget(lblprofiling_sonar)
       layout1V2.addLayout(layout1Hport_profiler)
@@ -893,43 +878,6 @@ class Window(QtGui.QWidget):
             self.ic.subscribe(self.ic.newcameraimage,"/BlueRov2/image")
         else:
             self.ic.subscribe(self.ic.newcameraimage,"/uwsim/camera1")
-
-    def ComboBaudActivated(self, baudtxt):
-        """
-        This method is called everytime the combo box with the Baudrate is activated.
-        It sends the required command for configuring the baudrate in the Serial Data Switch
-        :param baudtxt: the baudrate passed to a string value
-        :return:
-        """
-        # Send commands to Serial Data Switch
-        self.SDS_params.previous_baudrate = self.SDS_params.baudrate
-        self.SDS_params.baudrate = int(baudtxt)
-
-        self.SDS_params.parse_params()
-
-        self.SDS_params.change_baudrate()
-
-        # Reconfigure profiler and altimeter drivers
-        profiler_params = {'profiler_port_baudrate': int(baudtxt)}
-        altimeter_params = {'altimeter_port_baudrate': int(baudtxt)}
-        depth_params = {'winch_port_baudrate': int(baudtxt)}
-
-
-        try:
-            config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
-        except:
-            rospy.logwarn("Could not update profiler params. Are you sure Profiler is connected?")
-
-        try:
-            config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
-        except:
-            rospy.logwarn("Could not update Altimeter params. Are you sure Altimeter is connected?")
-
-        try:
-            config = self.ProfilerParam.winch_depth_client.update_configuration(depth_params)
-        except:
-            rospy.logwarn("Could not update depth board params. Are you sure Depth board is connected?")
-
 
     def ComboProfiler_Port_Activated(self,text):
         """
