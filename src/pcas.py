@@ -73,9 +73,10 @@ class ParameterServer_Params(QThread):
         The run method is a overun method of the QThread class, and starts when required in a separate thread.
 
         """
+        self.valeport_altimeter_client = dynamic_reconfigure.client.Client("/valeport_altimeter")
         self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
         self.winch_depth_client = dynamic_reconfigure.client.Client("/depth_driver")
-        self.valeport_altimeter_client = dynamic_reconfigure.client.Client("/valeport_altimeter")
+
 
 
 
@@ -734,14 +735,15 @@ class Window(QtGui.QWidget):
       # for depth board
       self.connect(self.winchsubscriber,self.winchsubscriber.signal,self.update_winch_depth)
 
-      ## DISPLAY WIDGET ##
-      # Display widget on screen
-      self.show()
-
       ## PARAMETER SERVER ##
       self.ProfilerParam = ParameterServer_Params()
       self.ProfilerParam.start()
       #self.profiler_client = dynamic_reconfigure.client.Client("/tritech_profiler")
+
+      ## DISPLAY WIDGET ##
+      # Display widget on screen
+      self.show()
+
       self.showNormal()
 
     def update_winch_depth(self):
@@ -1002,12 +1004,11 @@ class Window(QtGui.QWidget):
 
         profiler_params = {'port_enabled': str(self.SDS_params.profiler_data_enabled)}
 
-        print profiler_params
 
-        # try:
-        config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
-        # except:
-        #     rospy.logwarn("Could not update profiler params. Are you sure Profiler is connected?")
+        try:
+            config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
+        except:
+            rospy.logwarn("Could not update profiler params. Are you sure Profiler is connected?")
 
         try:
             config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
@@ -1029,7 +1030,6 @@ class Window(QtGui.QWidget):
         altimeter_params = {'altimeter_port_enabled': str(self.SDS_params.altimeter_data_enabled)}
 
         print altimeter_params
-
 
         try:
             config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
