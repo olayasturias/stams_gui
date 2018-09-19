@@ -182,7 +182,7 @@ class DepthInfo(QObject):
             try:
                 reply = self.conn.conn.read(4)
 
-                inhex = int(reply.encode('hex'), 32)
+                inhex = int(reply.encode('hex'), 16)
 
                 return inhex
             except:
