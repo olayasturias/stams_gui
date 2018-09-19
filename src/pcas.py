@@ -123,11 +123,11 @@ class SDS_Params():
         self.camera_pow_message    = '#0' + 'CAM' + str(self.camera_pow_enabled) + '\r'
         self.altimeter_pow_message = '#0' + 'ALT' + str(self.altimeter_pow_enabled) + '\r'
 
-        self.profiler_data_message  = '#0' + 'SRO0'+ '\r' + '#0SSO' + str(self.profiler_data_enabled) + '\r'
-        self.camera_data_message    = '#0' + 'SRO0'+ '\r' + '#0VID' + str(int(not self.camera_data_enabled)) + '\r'
-        self.altimeter_data_message = '#0' + 'SRO0'+ '\r' + '#0SSO' + str(int(not self.altimeter_data_enabled))+ '\r'
+        self.profiler_data_message  = '#0SSO' + str(self.profiler_data_enabled) + '\r'
+        self.camera_data_message    = '#0VID' + str(int(not self.camera_data_enabled)) + '\r'
+        self.altimeter_data_message = '#0SSO' + str(int(not self.altimeter_data_enabled))+ '\r'
 
-        self.baudrate_message       = '#0' + 'M' + str('C' if (self.baudrate == 115200) else self.baudrate/9600) + '\r'
+        #self.baudrate_message       = '#0' + 'M' + str('C' if (self.baudrate == 115200) else self.baudrate/9600) + '\r'
 
     def send(self, port, message):
         """
@@ -139,8 +139,8 @@ class SDS_Params():
         :return:
         """
         ser = serial.Serial(port,self.baudrate)
-        print self.baudrate
         ser.write(message)
+        print 'SERIAL MESSAGE SENT'
         print message
         ser.close()
 
@@ -775,7 +775,6 @@ class Window(QtGui.QWidget):
         ''' This function updates the text value fron the PlainText widget every time the
         value changes
         '''
-        self.StatusText.appendPlainText('obstacle =' + self.altimeter.datastring)
         self.StatusText2.appendPlainText('obstacle =' + self.altimeter.datastring)
 
 
