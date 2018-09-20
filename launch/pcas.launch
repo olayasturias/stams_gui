@@ -51,6 +51,17 @@
         >
   </node>
 
+  <node name="rviz"
+        pkg="rviz"
+        type="rviz"
+        output="screen"
+        respawn="True"
+        >
+  </node>
+
+  <node pkg="rosbag" type="record" output="screen" name="rosbag_record_diag"
+      args="record -o /home/stams/catkin_ws /tritech_profiler/scan /tritech_profiler/singlescan /tf"/>
+
 
   <!-- The GStreamer framerate needs to be an integral fraction -->
   <arg name="FPS" default="30/1"/>
