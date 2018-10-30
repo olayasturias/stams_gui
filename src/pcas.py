@@ -7,7 +7,7 @@ import sys
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import QObject, pyqtSignal, QRunnable, QThread,QThreadPool
-from PyQt4.Qt import QObject, QMutex, QApplication, QThread, QMutexLocker, QEvent,QMouseEvent
+from PyQt4.Qt import QObject, QMutex, QApplication, QThread, QMutexLocker, QEvent,QMouseEvent, QStyle
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 
@@ -306,9 +306,9 @@ class Window(QtGui.QWidget):
 
           lblnav is the text that labels the Navigation mode combo box
 
-      .. data:: lblnavpcas
+      .. data:: lblrecord
 
-          lblnavpcas is the text that labels the Navigation buttons for pcas
+          lblrecord is the text that labels the Recording buttons for pcas
 
       .. data:: guimode
 
@@ -406,7 +406,7 @@ class Window(QtGui.QWidget):
       linebr.setFrameShape(QtGui.QFrame.HLine)
       linebr.setFrameShadow(QtGui.QFrame.Sunken)
 
-      lblnavpcas                = QtGui.QLabel('Speed & Direction control', self)
+      lblrecord                 = QtGui.QLabel('Record Point Cloud', self)
       lblprofiling_sonar        = QtGui.QLabel('Profiling Sonar', self)
       lblprofiler_port_pcas     = QtGui.QLabel('Port', self)
 
@@ -532,61 +532,22 @@ class Window(QtGui.QWidget):
 
 
       # For PCAS
-
       # Create button and set tooltip
-      btnUPpcas = QtGui.QPushButton('UP', self)
-      btnUPpcas.setToolTip('Button for moving UP the RPIM')
+      self.recordstr = 'RECORD'
+      self.btnRECORD = QtGui.QPushButton(self.recordstr, self)
+      self.btnRECORD.setToolTip('Button for START/STOP recording Profiling data')
       # Moving and resizing button. sizehint gives recommended size
-      btnUPpcas.resize(btnUPpcas.sizeHint())
+      self.btnRECORD.resize(self.btnRECORD.sizeHint())
+      #self.btnRECORD.setIcon(self.style().standardIcon(QStyle,'SP_DialogNoButton'))
       # Keep executing function while button pressed
-      btnUPpcas.setAutoRepeat(True)
-      # Connect button to slot
-      self.connect(btnUPpcas, QtCore.SIGNAL("clicked()"),
-                   self.btnUPpcas_clicked)
+      #self.btnRECORD.setAutoRepeat(True)
 
-      # Create button and set tooltip
-      btnDOWNpcas = QtGui.QPushButton('DOWN', self)
-      btnDOWNpcas.setToolTip('Button for moving DOWN the RPIM')
-      # Moving and resizing button. sizehint gives recommended size
-      btnDOWNpcas.resize(btnDOWNpcas.sizeHint())
-      # Keep executing function while button pressed
-      btnDOWNpcas.setAutoRepeat(True)
-      # Connect button to slot
-      self.connect(btnDOWNpcas, QtCore.SIGNAL("clicked()"),
-                   self.btnDOWNpcas_clicked)
+      self.btnRECORD.setStyleSheet('QPushButton {background-color: #E20202; color: white;}')
+      self.btnRECORD.setFixedSize(110,50)
+      self.btnRECORD.font().setBold(0)
 
-      btnLEFTpcas = QtGui.QPushButton('<', self)
-      btnLEFTpcas.setToolTip('Button for rotating anti-clockwise the PCAS')
-      # Moving and resizing button. sizehint gives recommended size
-      btnLEFTpcas.resize(btnLEFTpcas.sizeHint())
-      # Keep executing function while button pressed
-      btnLEFTpcas.setAutoRepeat(True)
-      # Connect button to slot
-      self.connect(btnLEFTpcas, QtCore.SIGNAL("clicked()"),
-                   self.btnLEFTpcas_clicked)
-
-      # Create button and set tooltip
-      btnRGTpcas = QtGui.QPushButton('>', self)
-      btnRGTpcas.setToolTip('Button for rotating clockwise the PCAS')
-      # Moving and resizing button. sizehint gives recommended size
-      btnRGTpcas.resize(btnRGTpcas.sizeHint())
-      # Keep executing function while button pressed
-      btnRGTpcas.setAutoRepeat(True)
-      # Connect button to slot
-      self.connect(btnRGTpcas, QtCore.SIGNAL("clicked()"),
-                   self.btnRGTpcas_clicked)
-
-      # Create button and set tooltip
-      btnSTOPpcas = QtGui.QPushButton('STOP', self)
-      btnSTOPpcas.setToolTip('Button for STOPPING the PCAS')
-      # Moving and resizing button. sizehint gives recommended size
-      btnSTOPpcas.resize(btnSTOPpcas.sizeHint())
-      # Keep executing function while button pressed
-      btnSTOPpcas.setAutoRepeat(True)
-
-      btnSTOPpcas.setStyleSheet('QPushButton {background-color: #E20202; color: white;}')
-      btnSTOPpcas.setFixedSize(110,50)
-      btnSTOPpcas.font().setBold(0)
+      self.connect(self.btnRECORD, QtCore.SIGNAL("clicked()"),
+                   self.RecordButtonActivated)
 
 
 
@@ -628,16 +589,6 @@ class Window(QtGui.QWidget):
 
       ## POSITIONING ##
 
-      # BtnUP and btnDOWN vertical between them (with joystick), form layoutV2
-      layout1V1 = QtGui.QVBoxLayout()
-      layout1V1.addWidget(btnUPpcas)
-      layout1V1.addWidget(btnSTOPpcas)
-      layout1V1.addWidget(btnDOWNpcas)
-      # BtnRIGHT, layoutV2 and btnLEFT placed horizontally, form LayoutH1
-      layout1H1 = QtGui.QHBoxLayout()
-      layout1H1.addWidget(btnLEFTpcas)
-      layout1H1.addLayout(layout1V1)
-      layout1H1.addWidget(btnRGTpcas)
 
       layout2 = QtGui.QVBoxLayout()
       layout2.addWidget(lblobstacle)
@@ -645,8 +596,8 @@ class Window(QtGui.QWidget):
       layout2.addWidget(lbldepth)
       layout2.addWidget(self.DepthText)
       layout2.addWidget(linesonbut)
-      layout2.addWidget(lblnavpcas)
-      layout2.addLayout(layout1H1)
+      layout2.addWidget(lblrecord)
+      layout2.addWidget(self.btnRECORD)
       # Put it inside a QWidget so it can be added to QSplitter
       layoutw2 = QtGui.QWidget()
       layoutw2.setLayout(layout2)
@@ -1048,6 +999,16 @@ class Window(QtGui.QWidget):
             self.SDS_params.send(self.SDS_params.altimeter_channel, self.SDS_params.camera_data_message)
         else:
             self.SDS_params.camera_data_enabled = 0
+
+    def RecordButtonActivated(self):
+        if self.recordstr == 'RECORD':
+            self.recordstr = 'STOP RECORD'
+            self.btnRECORD.setText(self.recordstr)
+        else:
+            self.recordstr = 'RECORD'
+            self.btnRECORD.setText(self.recordstr)
+
+
 
 
 

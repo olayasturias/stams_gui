@@ -6,6 +6,7 @@ import rospy
 import sys
 import tf
 import numpy as np
+import datetime
 from sensor_msgs.msg import PointCloud
 
 sys_byteorder = ('>', '<')[sys.byteorder == 'little']
@@ -161,17 +162,19 @@ class SavePointCloud():
     def __init__(self):
         # Creating this object once. Otherwise waitForTransform takes too long
         self.tflistener = tf.TransformListener()
-        rospy.Subscriber('/tritech_profiler/scan', PointCloud, self.pcCallback)
+        rospy.Subscriber('/tritech_profiler/scan', PointCloud, self.pcCallback, queue_size=1)
         self.total_cloud = PointCloud()
         self.total_cloud.header.frame_id = 'world'
 
-    def pcCallback(self, data):
-        self.tflistener.waitForTransform('/world','/sonar',
-                                    rospy.Time().now(),
-                                    rospy.Duration(5.0))
-        transformed_data = self.tflistener.transformPointCloud('/world',data)
+        now = datetime.datetime.now()
+        self.plystr = str(now) + '.ply'
 
-        #self.total_cloud.points.append(self.total_cloud.points)
+    def pcCallback(self, data):
+        success = self.tflistener.waitForTransform('/world','/sonar',
+                                                    rospy.Time().now(),
+                                                    rospy.Duration(5.0))
+
+        transformed_data = self.tflistener.transformPointCloud('/world',data)
 
         print transformed_data.points[0]
 
@@ -180,7 +183,7 @@ class SavePointCloud():
 
         rospcd = self.PCtoPLY(self.total_cloud)
 
-        file = open('output.ply','w')
+        file = open(self.plystr,'w')
         file.write(rospcd)
         file.close()
 
@@ -202,6 +205,7 @@ class SavePointCloud():
         datastr += pointstr
 
         return datastr
+
     def PCtoPCD(self, msg):
 
         datastr = ''
