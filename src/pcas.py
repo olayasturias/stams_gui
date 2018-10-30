@@ -36,6 +36,8 @@ from depthstamp import DepthInfo
 import tf2_ros
 import tf
 
+from pc2ply import SavePointCloud
+
 """
 .. codeauthor:: Olaya Alvarez Tunon
 : file rov_ui.py
@@ -1004,9 +1006,13 @@ class Window(QtGui.QWidget):
         if self.recordstr == 'RECORD':
             self.recordstr = 'STOP RECORD'
             self.btnRECORD.setText(self.recordstr)
+            self.recordpoints = SavePointCloud()
+            self.recordpoints.run()
         else:
             self.recordstr = 'RECORD'
             self.btnRECORD.setText(self.recordstr)
+            self.recordpoints.subscriber.unregister()
+
 
 
 
