@@ -4,14 +4,8 @@
 import time
 import rospy
 import sys
-import pypcd
-from pypcd import numpy_pc2
+import tf
 import numpy as np
-import pandas as pd
-from collections import OrderedDict
-
-
-from sensor_msgs.msg import PointCloud2
 from sensor_msgs.msg import PointCloud
 
 sys_byteorder = ('>', '<')[sys.byteorder == 'little']
@@ -163,199 +157,79 @@ def read_ply(filename):
     return data
 
 
-def write_ply(filename, points=None, mesh=None, as_text=False):
-    """
-    Parameters
-    ----------
-    filename: str
-        The created file will be named with this
-    points: ndarray
-    mesh: ndarray
-    as_text: boolean
-        Set the write mode of the file. Default: binary
-    Returns
-    -------
-    boolean
-        True if no problems
-    """
-    if not filename.endswith('ply'):
-        filename += '.ply'
+class SavePointCloud():
+    def __init__(self):
+        # Creating this object once. Otherwise waitForTransform takes too long
+        self.tflistener = tf.TransformListener()
+        rospy.Subscriber('/tritech_profiler/scan', PointCloud, self.pcCallback)
+        self.total_cloud = PointCloud()
+        self.total_cloud.header.frame_id = 'world'
 
-    # open in text mode to write the header
-    with open(filename, 'w') as ply:
-        header = ['ply']
+    def pcCallback(self, data):
+        self.tflistener.waitForTransform('/world','/sonar',
+                                    rospy.Time().now(),
+                                    rospy.Duration(5.0))
+        transformed_data = self.tflistener.transformPointCloud('/world',data)
 
-        if as_text:
-            header.append('format ascii 1.0')
-        else:
-            header.append('format binary_' + sys.byteorder + '_endian 1.0')
+        #self.total_cloud.points.append(self.total_cloud.points)
 
-        if points is not None:
-            header.extend(describe_element('vertex', points))
-        if mesh is not None:
-            mesh = mesh.copy()
-            mesh.insert(loc=0, column="n_points", value=3)
-            mesh["n_points"] = mesh["n_points"].astype("u1")
-            header.extend(describe_element('face', mesh))
+        print transformed_data.points[0]
 
-        header.append('end_header')
+        self.total_cloud.points +=transformed_data.points
+        print self.total_cloud
 
-        for line in header:
-            ply.write("%s\n" % line)
+        rospcd = self.PCtoPLY(self.total_cloud)
 
-    if as_text:
-        if points is not None:
-            points.to_csv(filename, sep=" ", index=False, header=False, mode='a',
-                          encoding='ascii')
-        if mesh is not None:
-            mesh.to_csv(filename, sep=" ", index=False, header=False, mode='a',
-                        encoding='ascii')
+        file = open('output.ply','w')
+        file.write(rospcd)
+        file.close()
 
-    else:
-        with open(filename, 'ab') as ply:
-            if points is not None:
-                points.to_records(index=False).tofile(ply)
-            if mesh is not None:
-                mesh.to_records(index=False).tofile(ply)
+    def PCtoPLY(self, msg):
 
-    return True
+        datastr = 'ply' + '\n'
+        datastr += 'format'   + ' ' + 'ascii 1.0'     + '\n'
+        datastr += 'element vertex'+ ' ' + str(len(msg.points))  + '\n'
+        datastr += 'property float32' + ' x' + '\n'
+        datastr += 'property float32' + ' y'+ '\n'
+        datastr += 'property float32'+ ' z' + '\n'
+        # datastr += 'property list' + '\n'
+        datastr += 'end_header'+'\n'
 
+        pointstr = ''
+        for p in msg.points:
+            pointstr += str(p.x) + ' ' + str(p.y) + ' ' + str(p.z) + '\n'
+        pointstr = pointstr.decode('utf-8').encode('ascii','replace')
+        datastr += pointstr
 
-def describe_element(name, df):
-    """ Takes the columns of the dataframe and builds a ply-like description
-    Parameters
-    ----------
-    name: str
-    df: pandas DataFrame
-    Returns
-    -------
-    element: list[str]
-    """
-    property_formats = {'f': 'float', 'u': 'uchar', 'i': 'int'}
-    element = ['element ' + name + ' ' + str(len(df))]
+        return datastr
+    def PCtoPCD(self, msg):
 
-    if name == 'face':
-        element.append("property list uchar int vertex_indices")
+        datastr = ''
+        datastr += 'VERSION'   + ' ' + '.7'                                + '\n'
+        datastr += 'FIELDS'    + ' ' + 'x y z'                             + '\n'
+        datastr += 'SIZE'      + ' ' + '8 8 8'                             + '\n'
+        datastr += 'TYPE'      + ' ' + 'F F F'                             + '\n'
+        datastr += 'COUNT'     + ' ' + '1 1 1'                             + '\n'
+        datastr += 'WIDTH'     + ' ' + '3'                                 + '\n'
+        datastr += 'HEIGHT'    + ' ' + str(len(msg.points))                + '\n'
+        datastr += 'VIEWPOINT' + ' ' + '0 0 0 1 0 0 0' + '\n'
+        datastr += 'POINTS'    + ' ' + str(len(msg.points))                + '\n'
+        datastr += 'DATA'      + ' ' + 'binary_compressed'                 + '\n'
 
-    else:
-        for i in range(len(df.columns)):
-            # get first letter of dtype to infer format
-            f = property_formats[str(df.dtypes[i])[0]]
-            element.append('property ' + f + ' ' + df.columns.values[i])
+        pointstr = ''
+        for p in msg.points:
+            pointstr += str(p.x) + ' ' + str(p.y) + ' ' + str(p.z) + '\n'
+        pointstr = pointstr.decode('utf-8').encode('ascii','replace')
+        datastr += pointstr
 
-    return element
-def PCtoPC2(msg):
-    rospc2 = PointCloud2
-    rospc2.header = msg.header
-    rospc2.width = 3
-    rospc2.point_step = 8
-
-    count = 0
-    cloud = []
-    for p in msg.points:
-        count += 1
-        cloud.append(p.x)
-        cloud.append(p.y)
-        cloud.append(p.z)
-    rospc2.data = cloud
-    rospc2.height = count
-    return rospc2
-def PCtoPCD(msg):
-
-    datastr = ''
-    datastr += 'VERSION'   + ' ' + '.7'                                + '\n'
-    datastr += 'FIELDS'    + ' ' + 'x y z'                             + '\n'
-    datastr += 'SIZE'      + ' ' + '8 8 8'                             + '\n'
-    datastr += 'TYPE'      + ' ' + 'F F F'                             + '\n'
-    datastr += 'COUNT'     + ' ' + '1 1 1'                             + '\n'
-    datastr += 'WIDTH'     + ' ' + '3'                                 + '\n'
-    datastr += 'HEIGHT'    + ' ' + str(len(msg.points))                + '\n'
-    datastr += 'VIEWPOINT' + ' ' + '0 0 0 1 0 0 0' + '\n'
-    datastr += 'POINTS'    + ' ' + str(len(msg.points))                + '\n'
-    datastr += 'DATA'      + ' ' + 'binary_compressed'                 + '\n'
-
-    for p in msg.points:
-        datastr += str(p.x) + ' ' + str(p.y) + ' ' + str(p.z) + '\n'
-
-    return datastr
-
-
-def PCtoPLY(msg):
-
-    datastr = 'ply' + '\n'
-    datastr += 'format'   + ' ' + 'ascii 1.0'     + '\n'
-    datastr += 'element vertex'+ ' ' + str(len(msg.points))  + '\n'
-    datastr += 'property float32' + ' x' + '\n'
-    datastr += 'property float32' + ' y'+ '\n'
-    datastr += 'property float32'+ ' z' + '\n'
-    # datastr += 'property list' + '\n'
-    datastr += 'end_header'
-
-    for p in msg.points:
-        datastr += '\n'
-        datastr += str(p.x) + ' ' + str(p.y) + ' ' + str(p.z)
-    return datastr
-
-def from_msg(msg, squeeze=True):
-    """ from pointcloud2 msg
-    squeeze: fix when clouds get 1 as first dim
-    """
-    md = {'version': .7,
-          'fields': [],
-          'size': [],
-          'count': [],
-          'width': 0,
-          'height': 1,
-          'viewpoint': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
-          'points': 0,
-          'type': [],
-          'data': 'binary_compressed'}
-    for field in msg.fields:
-        md['fields'].append(field.name)
-        t, s = pc2_type_to_pcd_type[field.datatype]
-        md['type'].append(t)
-        md['size'].append(s)
-        # TODO handle multicount correctly
-        if field.count > 1:
-            warnings.warn('fields with count > 1 are not well tested')
-        md['count'].append(field.count)
-    pc_data = np.squeeze(numpy_pc2.pointcloud2_to_array(msg))
-    md['width'] = len(pc_data)
-    md['points'] = len(pc_data)
-    pc = PointCloud(md, pc_data)
-    return pc
-
-def pcCallback(data):
-
-    rospcd = PCtoPLY(data)
-    print rospcd
-    file = open('output.ply','w')
-    file.write(rospcd)
-    file.close()
-
-    #"read pointcloud, append to array"
-    cloud = []
-    for p in data.points:
-        cloud.append([p.x, p.y, p.z])
-    p = pcl.PointCloud()
-    p.from_array(cloud)
-
-    # pc = PointCloud.from_msg(data)
-    # pc.save('foo.pcd', compression='binary_compressed')
-    # print 'saved'
-    rospcd = PCtoPCD(data)
-    file = open('output.pcd','w')
-    file.write(rospcd)
-    file.close()
-    #pc.save('foo.pcd', compression='binary_compressed')
-    print 'saved'
+        return datastr
 
 
 def main():
     rospy.init_node('pctoply', anonymous=True)
     # Create application object
     #total_cloud = np.empty()
-    rospy.Subscriber('/tritech_profiler/scan', PointCloud, pcCallback)
+    SavePointCloud()
 
     rospy.spin()
 
