@@ -700,6 +700,9 @@ class Window(QtGui.QWidget):
       self.showNormal()
 
     def update_winch_depth(self):
+        """ Update the text which shows the information provided by the winch
+        with the depth of the pcas
+        """
         #self.DepthText.appendPlainText(self.winchsubscriber.wdepth)
         self.DepthText.setPlainText(self.winchsubscriber.wdepth)
 
@@ -744,88 +747,6 @@ class Window(QtGui.QWidget):
         '''
         self.collisioncameraimg.setImage(self.collision_ic.cv_image)
 
-    def btnfix1_clicked(self):
-        print 'btn1'
-
-    def btnfix2_clicked(self):
-        print 'btn2'
-
-    def btnfix3_clicked(self):
-        print 'btn3'
-
-
-    def btnLEFTpcas_clicked(self):
-        #do stuff
-        left = 1
-
-    def btnLEFT_clicked(self):
-        """ This function is executed when moving left button is clicked
-        It publishes the required values in the thrusters to move left
-      """
-        self.jthread.mutex.tryLock()
-        self.jthread.is_locked = 1
-        thrusters=[0,0,0,0,0]
-        pub = rospy.Publisher("/g500/thrusters_input", Float64MultiArray, queue_size=10)
-        msg = Float64MultiArray()
-        thrusters[0]=1
-        thrusters[1]=-1
-        msg.data = thrusters
-        pub.publish(msg)
-
-    def btnRGTpcas_clicked(self):
-        #do stuff
-        right = 1
-
-    def btnRGT_clicked(self):
-        """ This function is executed when moving right button is clicked
-        It publishes the required values in the thrusters to move right
-        """
-        self.jthread.mutex.tryLock()
-        self.jthread.is_locked = 1
-        thrusters=[0,0,0,0,0]
-        pub = rospy.Publisher("/g500/thrusters_input", Float64MultiArray, queue_size=10)
-        msg = Float64MultiArray()
-        thrusters[0]=-1
-        thrusters[1]=1
-        msg.data = thrusters
-        pub.publish(msg)
-
-    def btnUPpcas_clicked(self):
-        #do stuff
-        up = 1
-
-    def btnUP_clicked(self):
-        """ This function is executed when moving UP button is clicked
-        It publishes the required values in the thrusters to move up
-        """
-        self.jthread.mutex.tryLock()
-        self.jthread.is_locked = 1
-        thrusters=[0,0,0,0,0]
-        pub = rospy.Publisher("/g500/thrusters_input", Float64MultiArray, queue_size=10)
-        msg = Float64MultiArray()
-        thrusters[2] = thrusters[3]= 1
-        msg.data = thrusters
-        pub.publish(msg)
-
-    def btnDOWNpcas_clicked(self):
-        #do stuff
-        down = 1
-
-    def btnDOWN_clicked(self):
-        """ This function is executed when moving down button is clicked
-        It publishes the required values in the thrusters to move down
-        """
-        self.jthread.mutex.tryLock()
-        self.jthread.is_locked = 1
-        thrusters=[0,0,0,0,0]
-        pub = rospy.Publisher("/g500/thrusters_input", Float64MultiArray, queue_size=10)
-        msg = Float64MultiArray()
-        thrusters[2] = thrusters[3]= -1
-        msg.data = thrusters
-        pub.publish(msg)
-
-    def ComboFix_Port_Activated(self, txt):
-        print txt
 
     def Comboguimodeactivated(self, modetxt):
         if modetxt == 'Real ROV':
@@ -859,19 +780,6 @@ class Window(QtGui.QWidget):
         Here the value saved in the SDS_Params class for the Power supply channel of the Profiling sonar is updated."""
         self.SDS_params.profiler_pow_channel = text
 
-    # def ComboProfiler_Data_Activated(self,text):
-    #     """This funcion is called when the Profiling Sonar combo box for selection of Power Supply Channel is activated.
-    #     Here the value saved in the SDS_Params class for the Power supply channel of the Profiling sonar is updated."""
-    #     self.SDS_params.profiler_data_channel = text
-    #
-    #     profiler_params = {'profiler_port': self.SDS_params.profiler_data_channel}
-    #
-    #     try:
-    #         config = self.ProfilerParam.profiler_client.update_configuration(profiler_params)
-    #     except:
-    #         rospy.logwarn("Could not update profiler params. Are you sure Profiler is connected?")
-
-
     def ComboCam_Pow_Activated(self,text):
         """This funcion is called when the Profiling Sonar combo box for selection of Power Supply Channel is activated.
         Here the value saved in the SDS_Params class for the Power supply channel of the Profiling sonar is updated."""
@@ -881,11 +789,6 @@ class Window(QtGui.QWidget):
         """This funcion is called when the Sonar altimeter combo box for selection of Power Supply Channel is activated.
         Here the value saved in the SDS_Params class for the Power supply channel of the Sonar altimeter is updated."""
         self.SDS_params.altimeter_pow_channel = text
-
-    # def ComboAltimeter_Data_Activated(self,text):
-    #     """This funcion is called when the Sonar altimeter combo box for selection of Power Supply Channel is activated.
-    #     Here the value saved in the SDS_Params class for the Power supply channel of the Sonar altimeter is updated."""
-    #     self.SDS_params.altimeter_data_channel = text
 
     def ComboWinch_Port_Activated(self,text):
 
@@ -945,6 +848,13 @@ class Window(QtGui.QWidget):
         self.SDS_params.send(self.SDS_params.altimeter_channel, self.SDS_params.altimeter_pow_message)
 
     def ProfilerDataCheckbox(self,state):
+        """
+        Method that is executed everytime the state of the Checkbox for enabling/disabling Data transmission.
+        When this checkbox is activated, the Altimeter checkbox is unselected.
+        :param state: valiable that stores the state of the checkbox
+        :return:
+
+        """
         if state == QtCore.Qt.Checked:
             self.SDS_params.profiler_data_enabled = 1
             self.cb_alt_data.setChecked(False)
@@ -970,6 +880,13 @@ class Window(QtGui.QWidget):
 
 
     def AltimeterDataCheckbox(self,state):
+        """
+        Method that is executed everytime the state of the Altimeter Data Checkbox for enabling/disabling Data transmission changes.
+        When this checkbox is activated, the Profiler checkbox is unselected.
+        :param state: valiable that stores the state of the checkbox
+        :return:
+
+        """
         if state == QtCore.Qt.Checked:
             self.SDS_params.altimeter_data_enabled = 1
             self.cb_profiler_data.setChecked(False)
@@ -995,6 +912,12 @@ class Window(QtGui.QWidget):
 
 
     def CameraDataCheckbox(self,state):
+        """
+        Method that is executed everytime the state of the Camera Data Checkbox for enabling/disabling Data transmission changes.
+        :param state: valiable that stores the state of the checkbox
+        :return:
+
+        """
         if state == QtCore.Qt.Checked:
             self.SDS_params.camera_data_enabled = 1
             self.SDS_params.parse_params()
@@ -1003,6 +926,9 @@ class Window(QtGui.QWidget):
             self.SDS_params.camera_data_enabled = 0
 
     def RecordButtonActivated(self):
+    """
+    When activated, it starts recording a PointCloud, and when clicked again, it stops recording and saves the ply file.
+    """
         if self.recordstr == 'RECORD':
             self.recordstr = 'STOP RECORD'
             self.btnRECORD.setText(self.recordstr)

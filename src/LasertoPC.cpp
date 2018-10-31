@@ -56,7 +56,7 @@ public:
   LaserScanToPointCloud(ros::NodeHandle n) :
     n_(n),
     laser_sub_(n_, topic, 10),
-    laser_notifier_(laser_sub_,listener_, "shaft", 10),
+    laser_notifier_(laser_sub_,listener_, "world", 10),
     viewer("Profiling Viewer")
   {/*
       // Select if you want to change LaserScan topic
@@ -90,7 +90,7 @@ public:
     try
     {
         projector_.transformLaserScanToPointCloud(
-          "shaft",*scan_in, cloud,listener_);
+          "world",*scan_in, cloud,listener_);
     }
     catch (tf::TransformException& e)
     {
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
   ros::XMLRPCManager::instance()->bind("shutdown", shutdownCallback);
 
   /// Creating the object for doing the transformation
-  cout << "Write topic you want to subscribe to (/g500/ProfilingSonar or /g500/multibeam?): ";
+  cout << "Write topic you want to subscribe to (/tritech_profiler/singlescan or /g500/ProfilingSonar or /g500/multibeam?): ";
   getline(cin, topic);
 
   ros::NodeHandle n;
