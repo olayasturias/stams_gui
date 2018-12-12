@@ -926,9 +926,9 @@ class Window(QtGui.QWidget):
             self.SDS_params.camera_data_enabled = 0
 
     def RecordButtonActivated(self):
-    """
-    When activated, it starts recording a PointCloud, and when clicked again, it stops recording and saves the ply file.
-    """
+        """
+        When activated, it starts recording a PointCloud, and when clicked again, it stops recording and saves the ply file.
+        """
         if self.recordstr == 'RECORD':
             self.recordstr = 'STOP RECORD'
             self.btnRECORD.setText(self.recordstr)
