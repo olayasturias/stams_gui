@@ -773,6 +773,13 @@ class Window(QtGui.QWidget):
         :param text: string value with the name of the port.
         :return:
         """
+        altimeter_params = {'altimeter_port': str(text)}
+
+        try:
+            config = self.ProfilerParam.valeport_altimeter_client.update_configuration(altimeter_params)
+        except:
+            rospy.logwarn("Could not update Altimeter params. Are you sure Altimeter is connected?")
+
         self.SDS_params.altimeter_channel = text
 
     def ComboProfiler_Pow_Activated(self,text):
