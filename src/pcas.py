@@ -475,13 +475,10 @@ class Window(QtGui.QWidget):
       # Add labels to combo box options
       for i in range (0, 3):
           comboprofiler_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
+	  combosonaralt_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
           combocollcamera_port_pcas.addItem("/dev/ttyUSB" + str(i))
-          #combosonaralt_port_pcas.addItem(  "/dev/ttyUSB" + str(i))
           #combowinchdepth.addItem("/dev/ttyUSB" + str(i))
 
-      combosonaralt_port_pcas.addItem(  "/dev/ttyUSB2")
-      combosonaralt_port_pcas.addItem(  "/dev/ttyUSB0")
-      combosonaralt_port_pcas.addItem(  "/dev/ttyUSB1")
 
       combowinchdepth.addItem("/dev/ttyUSB1")
       combowinchdepth.addItem("/dev/ttyUSB2")
