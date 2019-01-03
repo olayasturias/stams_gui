@@ -7,7 +7,7 @@
         pkg="stams_gui"
         type="pcas.py"
         output="screen"
-        respawn="false">
+        respawn="true">
   </node>
 
       <!-- Launch Profiling Sonar -->

@@ -10,6 +10,7 @@ import datetime
 from sensor_msgs.msg import PointCloud
 from PyQt4 import QtGui, QtCore
 from PyQt4.Qt import QThread
+import os.path
 
 __author__ = "Olaya Alvarez"
 
@@ -184,6 +185,10 @@ class SavePointCloud(QThread):
     def run(self):
         '''Call methods and variables that need to be created when the thread
         starts to run '''
+        path = os.environ['HOME'] + '/Documents'
+        now = datetime.datetime.now()
+        self.plystr = path + '/' +str(now) + '.ply'
+        rospy.logwarn('CREATE PLY FILE WITH NAME %s',self.plystr)
         self.subscriber = rospy.Subscriber('/tritech_profiler/scan',
                                            PointCloud,
                                            self.pcCallback,
@@ -191,9 +196,6 @@ class SavePointCloud(QThread):
 
         self.total_cloud = PointCloud()
         self.total_cloud.header.frame_id = 'world'
-
-        now = datetime.datetime.now()
-        self.plystr = str(now) + '.ply'
 
     def pcCallback(self, data):
         """
@@ -208,20 +210,22 @@ class SavePointCloud(QThread):
         """
         success = self.tflistener.waitForTransform('/world','/sonar',
                                                     rospy.Time().now(),
-                                                    rospy.Duration(5.0))
+                                                    rospy.Duration(10.0))
 
         transformed_data = self.tflistener.transformPointCloud('/world',data)
 
         print transformed_data.points[0]
 
         self.total_cloud.points +=transformed_data.points
-        print self.total_cloud
 
         rospcd = self.PCtoPLY(self.total_cloud)
+
+        print self.plystr
 
         file = open(self.plystr,'w')
         file.write(rospcd)
         file.close()
+        rospy.logwarn('SAVED UPDATED PLY FILE')
 
     def PCtoPLY(self, msg):
         """
