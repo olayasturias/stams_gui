@@ -188,7 +188,7 @@ class SavePointCloud(QThread):
         path = os.environ['HOME'] + '/Documents'
         now = str(datetime.date.today()) +'-'+ str(datetime.datetime.now().hour)+ '-'+
               str(datetime.datetime.now().minute) + '-' + str(datetime.datetime.now().second)
-        self.plystr = path + '/' +str(now)[0:19] + '.ply'
+        self.plystr = path + '/' +now + '.ply'
         rospy.logwarn('CREATE PLY FILE WITH NAME %s',self.plystr)
         self.subscriber = rospy.Subscriber('/tritech_profiler/scan',
                                            PointCloud,
