@@ -186,7 +186,8 @@ class SavePointCloud(QThread):
         '''Call methods and variables that need to be created when the thread
         starts to run '''
         path = os.environ['HOME'] + '/Documents'
-        now = datetime.datetime.now()
+        now = str(datetime.date.today()) +'-'+ str(datetime.datetime.now().hour)+ '-'+
+              str(datetime.datetime.now().minute) + '-' + str(datetime.datetime.now().second)
         self.plystr = path + '/' +str(now)[0:19] + '.ply'
         rospy.logwarn('CREATE PLY FILE WITH NAME %s',self.plystr)
         self.subscriber = rospy.Subscriber('/tritech_profiler/scan',
